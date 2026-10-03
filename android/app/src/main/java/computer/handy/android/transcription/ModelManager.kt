@@ -9,6 +9,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
@@ -18,27 +19,11 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-
-/** The on-device speech model: Parakeet TDT 0.6B v3 (int8), as packaged for sherpa-onnx. */
-object ParakeetModel {
-    const val ID = "parakeet-tdt-0.6b-v3-int8"
-    const val URL =
-        "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/" +
-            "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2"
-    const val ENCODER = "encoder.int8.onnx"
-    const val DECODER = "decoder.int8.onnx"
-    const val JOINER = "joiner.int8.onnx"
-    const val TOKENS = "tokens.txt"
-    val FILES = listOf(ENCODER, DECODER, JOINER, TOKENS)
-
-    /** Archive size, for progress before the server reports it. */
-    const val DOWNLOAD_BYTES = 487_170_055L
-    /** Archive + extracted files must fit at the same time. */
-    const val REQUIRED_FREE_BYTES = 1_300_000_000L
-}
+import kotlin.coroutines.coroutineContext
 
 sealed interface ModelState {
     data object Missing : ModelState
+    data object Queued : ModelState
     data class Downloading(val downloaded: Long, val total: Long) : ModelState
     data object Extracting : ModelState
     data object Ready : ModelState
@@ -46,65 +31,99 @@ sealed interface ModelState {
 }
 
 /**
- * Downloads and installs the speech model into app-private storage. The archive is resumable
- * (HTTP Range) so a killed download continues where it stopped. Only the four files sherpa-onnx
- * needs are extracted; the archive is deleted afterwards.
+ * Downloads, installs and deletes speech models in app-private storage, one download at a
+ * time. Archives are resumable (HTTP Range) so an interrupted download continues where it
+ * stopped; only the files a model needs are extracted and the archive is deleted afterwards.
  */
 class ModelManager(context: Context, private val scope: CoroutineScope) {
 
     private val appContext = context.applicationContext
-    private val modelDir = File(appContext.filesDir, "models/${ParakeetModel.ID}")
-    private val completeMarker = File(modelDir, ".complete")
-    private val archive = File(appContext.cacheDir, "${ParakeetModel.ID}.tar.bz2.part")
+    private val root = File(appContext.filesDir, "models")
 
-    private val _state = MutableStateFlow(if (isInstalled()) ModelState.Ready else ModelState.Missing)
-    val state: StateFlow<ModelState> = _state.asStateFlow()
+    private val _states = MutableStateFlow(
+        ModelCatalog.ALL.associate { it.id to (if (isInstalled(it)) ModelState.Ready else ModelState.Missing) },
+    )
+    val states: StateFlow<Map<String, ModelState>> = _states.asStateFlow()
 
+    private val queue = ArrayDeque<SpeechModel>()
+    private var current: SpeechModel? = null
     private var job: Job? = null
 
+    fun dir(model: SpeechModel) = File(root, model.id)
+
     /** Directory with the model files, or null when not installed. */
-    fun installedDir(): File? = if (isInstalled()) modelDir else null
+    fun installedDir(model: SpeechModel): File? = if (isInstalled(model)) dir(model) else null
 
-    private fun isInstalled(): Boolean =
-        completeMarker.exists() && ParakeetModel.FILES.all { File(modelDir, it).length() > 0 }
+    fun isInstalled(model: SpeechModel): Boolean {
+        val dir = dir(model)
+        return File(dir, COMPLETE_MARKER).exists() && model.files.values.all { File(dir, it).length() > 0 }
+    }
 
-    fun download() {
-        if (job?.isActive == true) return
+    fun installedModels(): List<SpeechModel> = ModelCatalog.ALL.filter(::isInstalled)
+
+    private fun archive(model: SpeechModel) = File(appContext.cacheDir, "${model.id}.tar.bz2.part")
+
+    private fun setState(model: SpeechModel, state: ModelState) =
+        _states.update { it + (model.id to state) }
+
+    @Synchronized
+    fun download(model: SpeechModel) {
+        if (isInstalled(model) || model == current || model in queue) return
+        queue.addLast(model)
+        setState(model, ModelState.Queued)
+        if (job?.isActive != true) startNext()
+    }
+
+    @Synchronized
+    private fun startNext() {
+        val model = queue.removeFirstOrNull() ?: run {
+            current = null
+            return
+        }
+        current = model
         job = scope.launch(Dispatchers.IO) {
             try {
-                val free = appContext.filesDir.usableSpace
-                if (free < ParakeetModel.REQUIRED_FREE_BYTES - archive.length()) {
-                    _state.value = ModelState.Failed("Not enough storage: about 1.3 GB free space is needed.")
+                val needed = model.downloadBytes + model.installedMb * 1_000_000L - archive(model).length()
+                if (appContext.filesDir.usableSpace < needed + SPACE_MARGIN) {
+                    setState(model, ModelState.Failed(NOT_ENOUGH_SPACE))
                     return@launch
                 }
-                fetchArchive()
-                _state.value = ModelState.Extracting
-                extract()
-                archive.delete()
-                _state.value = ModelState.Ready
+                fetchArchive(model)
+                setState(model, ModelState.Extracting)
+                extract(model)
+                archive(model).delete()
+                setState(model, ModelState.Ready)
             } catch (e: kotlinx.coroutines.CancellationException) {
-                _state.value = if (isInstalled()) ModelState.Ready else ModelState.Missing
+                setState(model, if (isInstalled(model)) ModelState.Ready else ModelState.Missing)
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Model download failed", e)
-                _state.value = ModelState.Failed(e.message ?: e.javaClass.simpleName)
+                Log.e(TAG, "Download of ${model.id} failed", e)
+                setState(model, ModelState.Failed(e.message ?: e.javaClass.simpleName))
+            } finally {
+                startNext()
             }
         }
     }
 
-    fun cancel() {
-        job?.cancel()
+    @Synchronized
+    fun cancel(model: SpeechModel) {
+        if (queue.remove(model)) {
+            setState(model, ModelState.Missing)
+            return
+        }
+        if (model == current) job?.cancel()
     }
 
-    fun delete() {
-        cancel()
-        archive.delete()
-        modelDir.deleteRecursively()
-        _state.value = ModelState.Missing
+    fun delete(model: SpeechModel) {
+        cancel(model)
+        archive(model).delete()
+        dir(model).deleteRecursively()
+        setState(model, ModelState.Missing)
     }
 
-    private suspend fun fetchArchive() {
-        var url = URL(ParakeetModel.URL)
+    private suspend fun fetchArchive(model: SpeechModel) {
+        val archive = archive(model)
+        var url = URL(model.url)
         var redirects = 0
         while (true) {
             val existing = archive.length()
@@ -121,18 +140,17 @@ class ModelManager(context: Context, private val scope: CoroutineScope) {
                         val location = conn.getHeaderField("Location") ?: throw IOException("Redirect without location")
                         url = URL(url, location)
                         if (++redirects > 5) throw IOException("Too many redirects")
-                        continue
                     }
-                    416 -> return // Range not satisfiable: the archive is already complete.
+                    416 -> return // Range not satisfiable: already complete.
                     200, 206 -> {
                         val append = code == 206
                         val start = if (append) existing else 0L
                         val length = conn.contentLengthLong
-                        val total = if (length > 0) start + length else ParakeetModel.DOWNLOAD_BYTES
-                        copyWithProgress(conn, append, start, total)
+                        val total = if (length > 0) start + length else model.downloadBytes
+                        copyWithProgress(model, conn, archive, append, start, total)
                         return
                     }
-                    else -> throw IOException("Download failed: HTTP $code")
+                    else -> throw IOException("HTTP $code")
                 }
             } finally {
                 conn.disconnect()
@@ -140,22 +158,29 @@ class ModelManager(context: Context, private val scope: CoroutineScope) {
         }
     }
 
-    private suspend fun copyWithProgress(conn: HttpURLConnection, append: Boolean, start: Long, total: Long) {
+    private suspend fun copyWithProgress(
+        model: SpeechModel,
+        conn: HttpURLConnection,
+        archive: File,
+        append: Boolean,
+        start: Long,
+        total: Long,
+    ) {
         val buffer = ByteArray(256 * 1024)
         var done = start
         var lastReport = 0L
-        _state.value = ModelState.Downloading(done, total)
+        setState(model, ModelState.Downloading(done, total))
         conn.inputStream.use { input ->
             FileOutputStream(archive, append).use { output ->
                 while (true) {
-                    kotlin.coroutines.coroutineContext.ensureActive()
+                    coroutineContext.ensureActive()
                     val read = input.read(buffer)
                     if (read < 0) break
                     output.write(buffer, 0, read)
                     done += read
                     if (done - lastReport > 2_000_000) {
                         lastReport = done
-                        _state.value = ModelState.Downloading(done, total)
+                        setState(model, ModelState.Downloading(done, total))
                     }
                 }
             }
@@ -163,14 +188,14 @@ class ModelManager(context: Context, private val scope: CoroutineScope) {
         if (done < total) throw IOException("Download interrupted (${done / 1_000_000} / ${total / 1_000_000} MB)")
     }
 
-    private suspend fun extract() {
-        val staging = File(modelDir.parentFile, "${ParakeetModel.ID}.staging")
+    private suspend fun extract(model: SpeechModel) {
+        val staging = File(root, "${model.id}.staging")
         staging.deleteRecursively()
         staging.mkdirs()
-        val wanted = ParakeetModel.FILES.toSet()
-        TarArchiveInputStream(BZip2CompressorInputStream(BufferedInputStream(archive.inputStream(), 1 shl 20))).use { tar ->
+        val wanted = model.files.values.toSet()
+        TarArchiveInputStream(BZip2CompressorInputStream(BufferedInputStream(archive(model).inputStream(), 1 shl 20))).use { tar ->
             while (true) {
-                kotlin.coroutines.coroutineContext.ensureActive()
+                coroutineContext.ensureActive()
                 val entry = tar.nextEntry ?: break
                 val name = entry.name.substringAfterLast('/')
                 if (entry.isDirectory || name !in wanted) continue
@@ -179,12 +204,16 @@ class ModelManager(context: Context, private val scope: CoroutineScope) {
         }
         val missing = wanted.filter { File(staging, it).length() == 0L }
         if (missing.isNotEmpty()) throw IOException("Archive is missing $missing")
-        modelDir.deleteRecursively()
-        if (!staging.renameTo(modelDir)) throw IOException("Could not install the model")
-        completeMarker.writeText(ParakeetModel.ID)
+        val dir = dir(model)
+        dir.deleteRecursively()
+        if (!staging.renameTo(dir)) throw IOException("Could not install the model")
+        File(dir, COMPLETE_MARKER).writeText(model.id)
     }
 
     companion object {
         private const val TAG = "HandyModels"
+        private const val COMPLETE_MARKER = ".complete"
+        private const val SPACE_MARGIN = 100_000_000L
+        const val NOT_ENOUGH_SPACE = "not_enough_space"
     }
 }
