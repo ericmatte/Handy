@@ -2,7 +2,14 @@
 
 A native Android companion to Handy. An accessibility service watches which text field has focus and shows a small floating Handy button next to it. Tap the button, speak, and the transcript is inserted at the cursor. You keep your usual keyboard (Gboard etc.): this is **not** a custom keyboard (IME).
 
-Transcription runs **on the phone** with Parakeet TDT 0.6B v3, the same model as desktop Handy's "Parakeet V3": 25 European languages including French and English, detected automatically, with punctuation and casing. Optionally, the transcript is cleaned up by **Claude** with your own Anthropic API key and prompt, like desktop Handy's post-processing.
+It is a port of desktop Handy's transcription flow:
+
+- **On-device models:** desktop's built-in models that fit on a phone (Parakeet V3/V2, Whisper Turbo/Small/Base, Moonshine, SenseVoice, Canary), run with sherpa-onnx.
+- **Same cleanup:** custom words, filler-word removal and Silero VAD, with desktop's code and tests ported.
+- **Same Claude post-processing:** your own API key, named prompts and a separate "with Claude" action.
+- **Desktop extras:** history, start/stop sounds, trailing space, auto submit, and the model unload timeout.
+
+See [Desktop parity](#desktop-parity) for the full list.
 
 The desktop app (Tauri, `src/`, `src-tauri/`) is untouched; this folder is a standalone Gradle project.
 
@@ -43,22 +50,29 @@ Android blocks accessibility services for apps that don't come from an app store
 
 Open Handy and tap **Allow microphone**. Optionally allow notifications, so the "Handy is listening" notification is visible while recording.
 
-### 6. Download the speech model
+### 6. Download a speech model
 
-In Handy, **Speech model › Download (≈490 MB)**. It's a one-time download from the [sherpa-onnx releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) (Wi-Fi recommended). Keep the screen open; an interrupted download resumes where it stopped. Installing then takes a few minutes, and the model uses about 680 MB of storage.
+In Handy, open **Speech models** and download one. Parakeet V3 is recommended: about 490 MB, 25 European languages including French. Downloads come from the [sherpa-onnx releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models), Wi-Fi recommended. Keep the screen open; an interrupted download resumes where it stopped, and installing takes a few minutes. The first downloaded model is selected automatically.
 
 ### 7. Optional: Claude post-processing
 
-In **Post-processing (Claude)**: turn on _Clean up with Claude_, paste your Anthropic API key, keep or change the model (`claude-haiku-4-5` by default), and edit the prompt. The default is the desktop prompt, and `${output}` is replaced by the transcript. **Test** sends a sample sentence and shows Claude's answer.
+In **Post-processing (Claude)**:
+
+- Turn on _Clean up with Claude_ and paste your Anthropic API key.
+- Keep or change the model: `claude-haiku-4-5` by default, and _Load models_ lists the ones your key can use.
+- Pick or edit a prompt, or add your own. The default is desktop's "Improve Transcriptions", and `${output}` is replaced by the transcript.
+- **Test** sends a sample sentence through the selected prompt.
+- Under **Button tap**, choose whether a tap transcribes plainly or with Claude. The long-press menu always offers the other action, like desktop's two shortcuts.
 
 ## Using it
 
 - Focus a text field: the button fades in at the field's bottom-right corner, outside the field and never over the keyboard.
 - **Tap** to start recording (light haptic). The ring pulses with your voice. Recording stops after the configured silence, or when you tap again.
 - A thin spinner shows while transcribing (and while Claude cleans the text, if enabled), then a brief check, and the text appears at the cursor. On failure the button shakes and a toast explains why.
-- The first dictation after a while loads the model (a few seconds; it starts loading as soon as you tap, while you speak). The model stays in memory for 5 minutes after the last dictation, then is released (about 650 MB of RAM).
+- The first dictation after a while loads the model, which takes a few seconds; it starts loading as soon as you tap, while you speak. The model then stays in memory for the _Unload model_ delay (5 minutes by default, as on desktop).
 - **Drag vertically** to move the button. The offset is remembered per app.
-- **Long-press** for _Hide in this app_ and _Settings_.
+- **Long-press** for _Dictate with/without Claude_ (when post-processing is on), _Hide in this app_ and _Settings_.
+- Every dictation goes to **History** (last 5 by default, as on desktop), where you can copy the final or original text.
 
 The button is hidden on password fields and other sensitive fields, in excluded apps, on the lock screen, when the keyboard is closed, while scrolling and when the window changes.
 
@@ -71,10 +85,11 @@ The button is hidden on password fields and other sensitive fields, in excluded 
 | Exclusions                   | `core/ExclusionMatcher.kt`, `settings/InstalledApps.kt`                                        | Always: Handy itself, `com.android.systemui` (status bar and lock screen), all home apps; also skipped while the keyguard is locked. On first run, installed banks, password managers and authenticators are added to the editable blacklist.                                                                      |
 | Placement                    | `core/ButtonPlacer.kt`                                                                         | Candidates: right of the field, below, above, left. The first one on screen, off the keyboard (`TYPE_INPUT_METHOD` window bounds) and off the field wins.                                                                                                                                                          |
 | Overlay                      | `overlay/OverlayController.kt`, `overlay/HandyButtonView.kt`                                   | `TYPE_ACCESSIBILITY_OVERLAY` (no `SYSTEM_ALERT_WINDOW`), `FLAG_NOT_FOCUSABLE \| FLAG_NOT_TOUCH_MODAL \| FLAG_LAYOUT_NO_LIMITS`. Plain `View`, no Compose in the overlay. Animators run only while recording or processing.                                                                                         |
-| Audio                        | `audio/AudioRecorder.kt`, `core/EnergyVad.kt`                                                  | `AudioRecord`, 16 kHz mono PCM16, `VOICE_RECOGNITION` source, released as soon as recording stops. Energy VAD with an adaptive noise floor.                                                                                                                                                                        |
+| Audio                        | `audio/AudioRecorder.kt`, `audio/SileroVad.kt`, `core/SpeechSegments.kt`                       | `AudioRecord`, 16 kHz mono PCM16, `VOICE_RECOGNITION` source, released as soon as recording stops. Silero VAD (desktop's model) stops after the silence delay and keeps only the voiced parts (padded 200 ms). An energy VAD is the fallback.                                                                      |
 | Mic access in the background | `service/MicrophoneForegroundService.kt`                                                       | See below.                                                                                                                                                                                                                                                                                                         |
 | Insertion                    | `service/TextInserter.kt`, `core/TextMerger.kt`                                                | `ACTION_SET_TEXT` with the text merged at `textSelectionStart/End` (ignoring the placeholder when `isShowingHintText`), then `ACTION_SET_SELECTION` after the insertion. Fallback: clipboard + `ACTION_PASTE`, then restore the previous clip.                                                                     |
-| Transcription                | `transcription/SherpaTranscriber.kt`, `ModelManager.kt`                                        | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) 1.13.8 (ONNX Runtime, CPU), Parakeet TDT 0.6B v3 int8 (`nemo_transducer`, greedy search). Resumable download of the release archive; only the 4 needed files are extracted. Preloaded while you speak, released after 5 min idle or on memory pressure.       |
+| Transcription                | `transcription/ModelCatalog.kt`, `SherpaTranscriber.kt`, `ModelManager.kt`                     | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) 1.13.8 (ONNX Runtime, CPU), see [Models](#models). Queued, resumable downloads; only the needed int8 files are extracted. Preloaded while you speak, released after the unload delay or on memory pressure.                                                   |
+| Text cleanup                 | `core/TextCleanup.kt`                                                                          | Port of desktop's `audio_toolkit/text.rs` (and its tests): custom words (Levenshtein + Soundex, n-grams), filler words (universal + language-gated), stutter collapsing.                                                                                                                                           |
 | Post-processing              | `transcription/ClaudePostProcessor.kt`, `core/PostProcessPrompt.kt`, `settings/SecretStore.kt` | Official Anthropic Java SDK, Messages API, `claude-haiku-4-5` by default. Same prompt convention as desktop (`${output}`). API key encrypted with an Android Keystore AES-GCM key. On any error the raw transcript is inserted and a toast says so.                                                                |
 
 ### Microphone from an accessibility service (Android 14+)
@@ -90,9 +105,53 @@ The button is hidden on password fields and other sensitive fields, in excluded 
 - While no editable field is focused the service only receives focus, cursor and window-state events, and does nothing with them beyond a single `findFocus` call after the debounce.
 - The microphone and its foreground service only exist between a tap and the end of that dictation.
 
+## Models
+
+Every configuration below was run with sherpa-onnx 1.13.8 on the models' own sample recordings (French and English for the European models, plus zh/ja/ko/yue for SenseVoice) before shipping.
+
+| Model             | Desktop equivalent | Download | Languages                                 | Translate to English | Notes                                                                                    |
+| ----------------- | ------------------ | -------- | ----------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------- |
+| Parakeet V3       | Parakeet V3        | 487 MB   | 25 European (incl. French), auto-detected | –                    | Recommended. Fastest accurate multilingual model.                                        |
+| Parakeet V2       | Parakeet V2        | 482 MB   | English                                   | –                    | Best for English only.                                                                   |
+| Whisper Turbo     | Whisper Turbo      | 563 MB   | 99, auto-detected                         | No (as on desktop)   | Most accurate Whisper here; slower, ~1 GB on disk.                                       |
+| Whisper Small     | Whisper Small      | 639 MB   | 99, auto-detected                         | Yes                  | Only the int8 weights are kept (~375 MB).                                                |
+| Whisper Base      | (desktop catalog)  | 207 MB   | 99, auto-detected                         | Yes                  | For low-end phones.                                                                      |
+| Moonshine Base    | Moonshine Base     | 111 MB   | English                                   | –                    | Very fast.                                                                               |
+| SenseVoice        | SenseVoice         | 163 MB   | zh, en, ja, ko, yue, auto-detected        | –                    | The 2024-07-17 build: the 2025-09-09 one misdetected every clip as Cantonese in testing. |
+| Canary 180M Flash | Canary 180M Flash  | 153 MB   | en, de, es, fr (must be set)              | Yes                  | No language detection: uses the selected language, else the phone's.                     |
+
+Not ported: Whisper Medium and Large (1.9 GB+, too slow on a phone CPU), and desktop's newer GGUF catalog, which runs on `transcribe-cpp` and has no Android build.
+
+## Desktop parity
+
+| Desktop setting / behaviour                                                                   | Android                                                                                 |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `selected_model`, model download/delete                                                       | Speech models screen                                                                    |
+| `selected_language`, `translate_to_english`                                                   | Transcription › Language (only languages the model supports; same fallback rules)       |
+| `custom_words`, `word_correction_threshold`                                                   | Transcription › Custom words (same algorithm and default 0.18)                          |
+| `filler_word_removal_enabled`, `custom_filler_words`                                          | Transcription › Filler words (same lists and language gating)                           |
+| `model_unload_timeout`                                                                        | Transcription › Unload model (same choices, default 5 min)                              |
+| `vad_enabled` (Silero)                                                                        | Transcription › Voice activity detection (default on)                                   |
+| `post_process_enabled`, API key, model, prompts, selected prompt                              | Post-processing (Anthropic only; key encrypted with the Android Keystore)               |
+| `transcribe` / `transcribe_with_post_process` shortcuts                                       | Button tap action + long-press menu                                                     |
+| LLM response cleanup (`<think>` block, invisible characters)                                  | Same                                                                                    |
+| `audio_feedback`, `sound_theme`, `audio_feedback_volume`                                      | Button and behaviour › Sounds (marimba and pop, same files)                             |
+| `append_trailing_space`, `auto_submit`                                                        | Button and behaviour › Output (auto submit sends the field's IME action, Android 11+)   |
+| `history_limit`, history                                                                      | History screen (text only; recordings are not kept)                                     |
+| Global shortcuts, overlay, paste methods                                                      | Replaced by the floating button, `ACTION_SET_TEXT` insertion and the clipboard fallback |
+| Other providers (OpenAI, Groq…), Chinese script conversion, custom sound files, debug options | Not ported                                                                              |
+
 ## Settings
 
-Service status and shortcut, the restricted-settings walkthrough (Android 13+), microphone and notification permissions, the speech model (download, progress, delete), Claude post-processing (toggle, API key, model, prompt, test), button opacity (30–100 %) and size (32–52 dp) with a live preview (tap it to cycle the states), the silence delay (0.5–5 s), the excluded apps (picker with search, _Detect again_), and a **Test** screen with Compose, View and password fields.
+The home screen shows the service status (with the restricted-settings walkthrough on Android 13+), permissions and the selected model. It links to:
+
+- **Speech models**
+- **Transcription:** language, translate, custom words, filler words, unload delay, VAD.
+- **Post-processing:** Claude key, model, prompts, test, tap action.
+- **Button and behaviour:** opacity and size with a live preview, silence delay, sounds, trailing space, auto submit.
+- **Excluded apps**
+- **History**
+- **Test:** a screen with Compose, View and password fields.
 
 To re-skin the button, replace `app/src/main/res/drawable/ic_handy_button.xml` (any vector or bitmap drawable; it is drawn centered at ~60 % of the button). It is the hand from the desktop logo (`src/components/icons/HandyHand.tsx`, same artwork as `src-tauri/icons`). Colors are in `res/values/colors.xml`.
 
@@ -134,6 +193,8 @@ Run with Gboard as the keyboard. For each item, also check that the button never
 1. **Handy › Test** screen
    - [ ] The button appears on _Single line_, _Multi-line_ and _Classic EditText_; never on _Password_.
    - [ ] Dictate a sentence in French, then one in English: both are transcribed in their language, with punctuation.
+   - [ ] Say "euh… je pense que c'est bon": "euh" is removed (filler words). Add "Handy" as a custom word, say "handee": it becomes "Handy".
+   - [ ] Pause for a few seconds mid-sentence: the recording continues; stop talking: it stops after the silence delay.
    - [ ] On an empty field, the placeholder is replaced, not merged (only your sentence).
    - [ ] With text and the cursor in the middle, the text is inserted at the cursor with spaces on both sides, and the cursor ends up right after it.
    - [ ] With a word selected, the selection is replaced.
@@ -151,16 +212,14 @@ Run with Gboard as the keyboard. For each item, also check that the button never
 10. **Lock screen / notification shade / launcher search:** no button.
 11. **Settings:** opacity and size changes apply to the live button. The button dims to ~40 % after 3 s without interaction.
 12. **Battery:** after a few minutes idle, _Settings › Battery › Handy_ shows near-zero usage.
-13. **Model:** the first dictation after installing the model (or after 5 min idle) takes a few seconds longer; the next ones are fast. Delete the model in settings → tapping the button explains that it must be downloaded and opens the settings.
-14. **Claude:** with post-processing on, say "euh alors la réunion est à trois heures virgule pas quatre heures point" → you get something like "La réunion est à 3 h, pas 4 h." With a wrong API key, the raw transcript is inserted and a toast says post-processing failed. Turn on airplane mode: transcription still works (on-device) and the raw text is inserted.
+13. **Models:** download a second model (e.g. Moonshine Base) while the first is installed: it is queued and selectable once ready. Switch models and dictate. Whisper Small with _Translate to English_ on: French speech comes out in English. Delete every model → tapping the button explains that one must be downloaded and opens the settings.
+14. **Claude:** with post-processing on and the tap set to _Transcribe and clean up with Claude_, say "euh alors la réunion est à trois heures virgule pas quatre heures point" → you get something like "La réunion est à 3 h, pas 4 h." Long-press › _Dictate without Claude_ gives the plain transcript. Add a second prompt (e.g. "Translate to English: ${output}"), select it, dictate. With a wrong API key, the transcript is inserted and a toast says post-processing failed. In airplane mode, transcription still works (on-device).
+15. **History, sounds, output:** the History screen lists the last dictations with the original and the Claude version. Sounds on: the start chime plays once the mic is ready, the stop chime at the end. Auto submit on in Messages: the message is sent after insertion.
 
 ## What's next
 
-- **Silero VAD:** replace `EnergyVad` with Silero (the same `silero_vad_v4.onnx` as desktop; sherpa-onnx has a VAD API) for more reliable auto-stop, and trim silence before inference.
-- **More models:** a model picker like desktop's (Whisper small/turbo via sherpa-onnx, Parakeet V2 for English only), and a setting for the unload delay.
-- **Post-processing shortcut:** a second gesture (e.g. double tap) for "with Claude" vs. raw, like desktop's `--toggle-post-process`, and several saved prompts.
-- **Streaming Claude output** for long dictations, and a request timeout setting (20 s today).
-- **Download in a foreground service** so the model download survives leaving the settings screen for a long time.
 - Instrumented tests for `TextInserter` against View, Compose and WebView fields.
+- Download models in a foreground service so long downloads survive leaving the settings screen.
+- Other post-processing providers (OpenAI-compatible endpoints), and Chinese script conversion.
 - A release signing config and R8 rules (the debug APK is unminified).
 - The clipboard fallback can't restore the previous clip on Android 10+ when Handy can't read it (only the focused app or the IME may); the transcript then stays on the clipboard.
