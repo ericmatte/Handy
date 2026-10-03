@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Handy</string>
+    <string name="accessibility_service_label">Handy dictation button</string>
+    <string name="accessibility_service_description">Shows a small Handy button next to the text field you are typing in. Tap it to dictate: your voice is transcribed and the text is inserted at the cursor. Handy reads which field is focused (never password fields or excluded apps) and does not collect or send what you type.</string>
+
+    <!-- Overlay -->
+    <string name="overlay_button_description">Handy: tap to dictate, long-press for options</string>
+    <string name="overlay_button_recording">Handy is listening. Tap to stop.</string>
+    <string name="overlay_button_processing">Handy is transcribing</string>
+    <string name="menu_hide_in_app">Hide in this app</string>
+    <string name="menu_settings">Settings</string>
+
+    <!-- Dictation feedback -->
+    <string name="error_mic_permission">Handy needs microphone access. Allow it in Handy\'s settings.</string>
+    <string name="error_mic_unavailable">The microphone is unavailable (in use or blocked by the system).</string>
+    <string name="error_too_short">Recording too short.</string>
+    <string name="error_nothing_heard">Nothing was heard.</string>
+    <string name="error_generic">Dictation failed.</string>
+    <string name="toast_copied_to_clipboard">Couldn\'t write into the field: the text is on the clipboard.</string>
+    <string name="notification_channel_recording">Recording</string>
+    <string name="notification_recording_title">Handy is listening…</string>
+
+    <!-- Settings -->
+    <string name="settings_service_title">Dictation button</string>
+    <string name="settings_service_enabled">Service enabled</string>
+    <string name="settings_service_disabled">Service disabled</string>
+    <string name="settings_service_explanation">Enable “Handy dictation button” in Accessibility settings (Installed apps / Downloaded apps).</string>
+    <string name="settings_open_accessibility">Open accessibility settings</string>
+    <string name="settings_restricted_title">“Restricted setting” blocked?</string>
+    <string name="settings_restricted_body">Android 13+ blocks accessibility for apps installed outside the Play Store. If the switch is greyed out: open App info › ⋮ menu (top right) › “Allow restricted settings”, confirm, then come back and enable the service. On Android 15+ the option only appears after you have tried to enable the service once.</string>
+    <string name="settings_open_app_info">Open app info</string>
+    <string name="settings_permissions_title">Permissions</string>
+    <string name="settings_mic_granted">Microphone allowed</string>
+    <string name="settings_mic_missing">Microphone not allowed</string>
+    <string name="settings_grant_mic">Allow microphone</string>
+    <string name="settings_notifications_explanation">Optional: a notification is shown while Handy is recording. Allow notifications to see it.</string>
+    <string name="settings_grant_notifications">Allow notifications</string>
+    <string name="settings_appearance_title">Button</string>
+    <string name="settings_opacity">Opacity at rest: %1$d %%</string>
+    <string name="settings_size">Size: %1$d dp</string>
+    <string name="settings_preview_hint">Tap the preview to see each state. The button fades further after 3 s without interaction.</string>
+    <string name="settings_recording_title">Recording</string>
+    <string name="settings_silence">Stop after silence: %1$.1f s</string>
+    <string name="settings_silence_explanation">Recording stops by itself after this much silence following speech. You can also tap the button to stop.</string>
+    <string name="settings_exclusions_title">Excluded apps</string>
+    <string name="settings_exclusions_explanation">The button never appears in these apps. Banks and password managers found on this phone were added automatically. Handy itself, the system UI, the lock screen and launchers are always excluded.</string>
+    <string name="settings_exclusions_add">Add apps</string>
+    <string name="settings_exclusions_redetect">Detect again</string>
+    <string name="settings_exclusions_empty">No excluded apps.</string>
+    <string name="settings_exclusions_remove">Remove</string>
+    <plurals name="settings_redetect_result">
+        <item quantity="one">%1$d app added</item>
+        <item quantity="other">%1$d apps added</item>
+    </plurals>
+    <string name="settings_picker_title">Exclude apps</string>
+    <string name="settings_picker_search">Search</string>
+    <string name="action_done">Done</string>
+    <string name="settings_test_button">Test in a text field</string>
+
+    <!-- Test screen -->
+    <string name="test_title">Test Handy</string>
+    <string name="test_intro">Tap a field: the Handy button appears next to it, outside the keyboard. Tap the button, speak, and the (simulated) transcript is inserted at the cursor.</string>
+    <string name="test_field_single">Single line</string>
+    <string name="test_field_multi">Multi-line</string>
+    <string name="test_field_multi_hint">The placeholder must not be merged with the text</string>
+    <string name="test_field_view">Classic EditText (View)</string>
+    <string name="test_field_view_hint">Type or dictate here</string>
+    <string name="test_field_password">Password</string>
+    <string name="test_password_note">No button should appear on the password field.</string>
+</resources>

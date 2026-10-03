@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_label">Bouton de dictée Handy</string>
+    <string name="accessibility_service_description">Affiche un petit bouton Handy à côté du champ texte où vous écrivez. Touchez-le pour dicter : votre voix est transcrite et le texte est inséré au curseur. Handy lit quel champ a le focus (jamais les champs de mot de passe ni les apps exclues) et ne collecte ni n\'envoie ce que vous tapez.</string>
+
+    <string name="overlay_button_description">Handy : toucher pour dicter, appui long pour les options</string>
+    <string name="overlay_button_recording">Handy écoute. Touchez pour arrêter.</string>
+    <string name="overlay_button_processing">Handy transcrit</string>
+    <string name="menu_hide_in_app">Masquer dans cette app</string>
+    <string name="menu_settings">Réglages</string>
+
+    <string name="error_mic_permission">Handy a besoin du micro. Autorisez-le dans les réglages de Handy.</string>
+    <string name="error_mic_unavailable">Le micro est indisponible (utilisé ou bloqué par le système).</string>
+    <string name="error_too_short">Enregistrement trop court.</string>
+    <string name="error_nothing_heard">Rien n\'a été entendu.</string>
+    <string name="error_generic">La dictée a échoué.</string>
+    <string name="toast_copied_to_clipboard">Impossible d\'écrire dans le champ : le texte est dans le presse-papiers.</string>
+    <string name="notification_channel_recording">Enregistrement</string>
+    <string name="notification_recording_title">Handy écoute…</string>
+
+    <string name="settings_service_title">Bouton de dictée</string>
+    <string name="settings_service_enabled">Service activé</string>
+    <string name="settings_service_disabled">Service désactivé</string>
+    <string name="settings_service_explanation">Activez « Bouton de dictée Handy » dans les réglages d\'accessibilité (Applications installées / téléchargées).</string>
+    <string name="settings_open_accessibility">Ouvrir les réglages d\'accessibilité</string>
+    <string name="settings_restricted_title">« Paramètre restreint » bloqué ?</string>
+    <string name="settings_restricted_body">Android 13+ bloque l\'accessibilité pour les apps installées hors du Play Store. Si l\'interrupteur est grisé : ouvrez Infos sur l\'app › menu ⋮ (en haut à droite) › « Autoriser les paramètres restreints », confirmez, puis revenez activer le service. Sur Android 15+, l\'option n\'apparaît qu\'après une première tentative d\'activation du service.</string>
+    <string name="settings_open_app_info">Ouvrir les infos de l\'app</string>
+    <string name="settings_permissions_title">Autorisations</string>
+    <string name="settings_mic_granted">Micro autorisé</string>
+    <string name="settings_mic_missing">Micro non autorisé</string>
+    <string name="settings_grant_mic">Autoriser le micro</string>
+    <string name="settings_notifications_explanation">Facultatif : une notification s\'affiche pendant l\'enregistrement. Autorisez les notifications pour la voir.</string>
+    <string name="settings_grant_notifications">Autoriser les notifications</string>
+    <string name="settings_appearance_title">Bouton</string>
+    <string name="settings_opacity">Opacité au repos : %1$d %%</string>
+    <string name="settings_size">Taille : %1$d dp</string>
+    <string name="settings_preview_hint">Touchez l\'aperçu pour voir chaque état. Le bouton s\'estompe davantage après 3 s sans interaction.</string>
+    <string name="settings_recording_title">Enregistrement</string>
+    <string name="settings_silence">Arrêt après un silence de %1$.1f s</string>
+    <string name="settings_silence_explanation">L\'enregistrement s\'arrête seul après ce silence suivant la parole. Vous pouvez aussi toucher le bouton pour arrêter.</string>
+    <string name="settings_exclusions_title">Apps exclues</string>
+    <string name="settings_exclusions_explanation">Le bouton n\'apparaît jamais dans ces apps. Les banques et gestionnaires de mots de passe trouvés sur ce téléphone ont été ajoutés automatiquement. Handy, l\'interface système, l\'écran de verrouillage et les lanceurs sont toujours exclus.</string>
+    <string name="settings_exclusions_add">Ajouter des apps</string>
+    <string name="settings_exclusions_redetect">Détecter à nouveau</string>
+    <string name="settings_exclusions_empty">Aucune app exclue.</string>
+    <string name="settings_exclusions_remove">Retirer</string>
+    <plurals name="settings_redetect_result">
+        <item quantity="one">%1$d app ajoutée</item>
+        <item quantity="many">%1$d apps ajoutées</item>
+        <item quantity="other">%1$d apps ajoutées</item>
+    </plurals>
+    <string name="settings_picker_title">Exclure des apps</string>
+    <string name="settings_picker_search">Rechercher</string>
+    <string name="action_done">OK</string>
+    <string name="settings_test_button">Tester dans un champ texte</string>
+
+    <string name="test_title">Tester Handy</string>
+    <string name="test_intro">Touchez un champ : le bouton Handy apparaît à côté, hors du clavier. Touchez le bouton, parlez, et la transcription (simulée) est insérée au curseur.</string>
+    <string name="test_field_single">Une ligne</string>
+    <string name="test_field_multi">Plusieurs lignes</string>
+    <string name="test_field_multi_hint">Le texte indicatif ne doit pas être fusionné</string>
+    <string name="test_field_view">EditText classique (View)</string>
+    <string name="test_field_view_hint">Tapez ou dictez ici</string>
+    <string name="test_field_password">Mot de passe</string>
+    <string name="test_password_note">Aucun bouton ne doit apparaître sur le champ mot de passe.</string>
+</resources>
