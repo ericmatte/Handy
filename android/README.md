@@ -2,7 +2,7 @@
 
 A native Android companion to Handy. An accessibility service watches which text field has focus and shows a small floating Handy button next to it. Tap the button, speak, and the transcript is inserted at the cursor. You keep your usual keyboard (Gboard etc.): this is **not** a custom keyboard (IME).
 
-> **Status:** transcription is simulated (`FakeTranscriber` returns a fixed sentence). The real on-device model and Claude post-processing come next (see [What's next](#whats-next)).
+Transcription runs **on the phone** with Parakeet TDT 0.6B v3, the same model as desktop Handy's "Parakeet V3": 25 European languages including French and English, detected automatically, with punctuation and casing. Optionally, the transcript is cleaned up by **Claude** with your own Anthropic API key and prompt, like desktop Handy's post-processing.
 
 The desktop app (Tauri, `src/`, `src-tauri/`) is untouched; this folder is a standalone Gradle project.
 
@@ -43,11 +43,20 @@ Android blocks accessibility services for apps that don't come from an app store
 
 Open Handy and tap **Allow microphone**. Optionally allow notifications, so the "Handy is listening" notification is visible while recording.
 
+### 6. Download the speech model
+
+In Handy, **Speech model › Download (≈490 MB)**. It's a one-time download from the [sherpa-onnx releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) (Wi-Fi recommended). Keep the screen open; an interrupted download resumes where it stopped. Installing then takes a few minutes, and the model uses about 680 MB of storage.
+
+### 7. Optional: Claude post-processing
+
+In **Post-processing (Claude)**: turn on _Clean up with Claude_, paste your Anthropic API key, keep or change the model (`claude-haiku-4-5` by default), and edit the prompt. The default is the desktop prompt, and `${output}` is replaced by the transcript. **Test** sends a sample sentence and shows Claude's answer.
+
 ## Using it
 
 - Focus a text field: the button fades in at the field's bottom-right corner, outside the field and never over the keyboard.
 - **Tap** to start recording (light haptic). The ring pulses with your voice. Recording stops after the configured silence, or when you tap again.
-- A thin spinner shows while transcribing, then a brief check, and the text appears at the cursor. On failure the button shakes and a toast explains why.
+- A thin spinner shows while transcribing (and while Claude cleans the text, if enabled), then a brief check, and the text appears at the cursor. On failure the button shakes and a toast explains why.
+- The first dictation after a while loads the model (a few seconds; it starts loading as soon as you tap, while you speak). The model stays in memory for 5 minutes after the last dictation, then is released (about 650 MB of RAM).
 - **Drag vertically** to move the button. The offset is remembered per app.
 - **Long-press** for _Hide in this app_ and _Settings_.
 
@@ -55,17 +64,18 @@ The button is hidden on password fields and other sensitive fields, in excluded 
 
 ## How it works
 
-| Area                         | Where                                                        | Notes                                                                                                                                                                                                                                                                                                              |
-| ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Focus tracking               | `service/HandyAccessibilityService.kt`                       | Base events: `typeViewFocused \| typeViewTextSelectionChanged \| typeWindowStateChanged`. While an eligible field is focused, `typeViewScrolled \| typeWindowsChanged` are added at runtime (to hide on scroll and track the keyboard), then removed. All events are debounced (80 ms) into one `evaluate()` pass. |
-| Sensitive fields             | `core/SensitiveFieldDetector.kt`                             | `isPassword`, password `inputType`s (text, web, number, visible), and keywords in the hint, view id and content description (password, mot de passe, pin, nip, otp, code, cvv, carte…), matched on whole tokens.                                                                                                   |
-| Exclusions                   | `core/ExclusionMatcher.kt`, `settings/InstalledApps.kt`      | Always: Handy itself, `com.android.systemui` (status bar and lock screen), all home apps; also skipped while the keyguard is locked. On first run, installed banks, password managers and authenticators are added to the editable blacklist.                                                                      |
-| Placement                    | `core/ButtonPlacer.kt`                                       | Candidates: right of the field, below, above, left. The first one on screen, off the keyboard (`TYPE_INPUT_METHOD` window bounds) and off the field wins.                                                                                                                                                          |
-| Overlay                      | `overlay/OverlayController.kt`, `overlay/HandyButtonView.kt` | `TYPE_ACCESSIBILITY_OVERLAY` (no `SYSTEM_ALERT_WINDOW`), `FLAG_NOT_FOCUSABLE \| FLAG_NOT_TOUCH_MODAL \| FLAG_LAYOUT_NO_LIMITS`. Plain `View`, no Compose in the overlay. Animators run only while recording or processing.                                                                                         |
-| Audio                        | `audio/AudioRecorder.kt`, `core/EnergyVad.kt`                | `AudioRecord`, 16 kHz mono PCM16, `VOICE_RECOGNITION` source, released as soon as recording stops. Energy VAD with an adaptive noise floor.                                                                                                                                                                        |
-| Mic access in the background | `service/MicrophoneForegroundService.kt`                     | See below.                                                                                                                                                                                                                                                                                                         |
-| Insertion                    | `service/TextInserter.kt`, `core/TextMerger.kt`              | `ACTION_SET_TEXT` with the text merged at `textSelectionStart/End` (ignoring the placeholder when `isShowingHintText`), then `ACTION_SET_SELECTION` after the insertion. Fallback: clipboard + `ACTION_PASTE`, then restore the previous clip.                                                                     |
-| Transcription                | `transcription/`                                             | `Transcriber` + `PostProcessor` interfaces, `DictationPipeline` glue. Wired in `HandyAccessibilityService.onServiceConnected`.                                                                                                                                                                                     |
+| Area                         | Where                                                                                          | Notes                                                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Focus tracking               | `service/HandyAccessibilityService.kt`                                                         | Base events: `typeViewFocused \| typeViewTextSelectionChanged \| typeWindowStateChanged`. While an eligible field is focused, `typeViewScrolled \| typeWindowsChanged` are added at runtime (to hide on scroll and track the keyboard), then removed. All events are debounced (80 ms) into one `evaluate()` pass. |
+| Sensitive fields             | `core/SensitiveFieldDetector.kt`                                                               | `isPassword`, password `inputType`s (text, web, number, visible), and keywords in the hint, view id and content description (password, mot de passe, pin, nip, otp, code, cvv, carte…), matched on whole tokens.                                                                                                   |
+| Exclusions                   | `core/ExclusionMatcher.kt`, `settings/InstalledApps.kt`                                        | Always: Handy itself, `com.android.systemui` (status bar and lock screen), all home apps; also skipped while the keyguard is locked. On first run, installed banks, password managers and authenticators are added to the editable blacklist.                                                                      |
+| Placement                    | `core/ButtonPlacer.kt`                                                                         | Candidates: right of the field, below, above, left. The first one on screen, off the keyboard (`TYPE_INPUT_METHOD` window bounds) and off the field wins.                                                                                                                                                          |
+| Overlay                      | `overlay/OverlayController.kt`, `overlay/HandyButtonView.kt`                                   | `TYPE_ACCESSIBILITY_OVERLAY` (no `SYSTEM_ALERT_WINDOW`), `FLAG_NOT_FOCUSABLE \| FLAG_NOT_TOUCH_MODAL \| FLAG_LAYOUT_NO_LIMITS`. Plain `View`, no Compose in the overlay. Animators run only while recording or processing.                                                                                         |
+| Audio                        | `audio/AudioRecorder.kt`, `core/EnergyVad.kt`                                                  | `AudioRecord`, 16 kHz mono PCM16, `VOICE_RECOGNITION` source, released as soon as recording stops. Energy VAD with an adaptive noise floor.                                                                                                                                                                        |
+| Mic access in the background | `service/MicrophoneForegroundService.kt`                                                       | See below.                                                                                                                                                                                                                                                                                                         |
+| Insertion                    | `service/TextInserter.kt`, `core/TextMerger.kt`                                                | `ACTION_SET_TEXT` with the text merged at `textSelectionStart/End` (ignoring the placeholder when `isShowingHintText`), then `ACTION_SET_SELECTION` after the insertion. Fallback: clipboard + `ACTION_PASTE`, then restore the previous clip.                                                                     |
+| Transcription                | `transcription/SherpaTranscriber.kt`, `ModelManager.kt`                                        | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) 1.13.8 (ONNX Runtime, CPU), Parakeet TDT 0.6B v3 int8 (`nemo_transducer`, greedy search). Resumable download of the release archive; only the 4 needed files are extracted. Preloaded while you speak, released after 5 min idle or on memory pressure.       |
+| Post-processing              | `transcription/ClaudePostProcessor.kt`, `core/PostProcessPrompt.kt`, `settings/SecretStore.kt` | Official Anthropic Java SDK, Messages API, `claude-haiku-4-5` by default. Same prompt convention as desktop (`${output}`). API key encrypted with an Android Keystore AES-GCM key. On any error the raw transcript is inserted and a toast says so.                                                                |
 
 ### Microphone from an accessibility service (Android 14+)
 
@@ -76,12 +86,13 @@ The button is hidden on password fields and other sensitive fields, in excluded 
 ### Battery
 
 - No polling, sensors or wake locks; no `WorkManager`, alarms or broadcast receivers.
+- Inference only runs after a dictation (a few seconds of CPU). The model is dropped from memory 5 minutes after the last dictation.
 - While no editable field is focused the service only receives focus, cursor and window-state events, and does nothing with them beyond a single `findFocus` call after the debounce.
 - The microphone and its foreground service only exist between a tap and the end of that dictation.
 
 ## Settings
 
-Service status and shortcut, the restricted-settings walkthrough (Android 13+), microphone and notification permissions, button opacity (30–100 %) and size (32–52 dp) with a live preview (tap it to cycle the states), the silence delay (0.5–5 s), the excluded apps (picker with search, _Detect again_), and a **Test** screen with Compose, View and password fields.
+Service status and shortcut, the restricted-settings walkthrough (Android 13+), microphone and notification permissions, the speech model (download, progress, delete), Claude post-processing (toggle, API key, model, prompt, test), button opacity (30–100 %) and size (32–52 dp) with a live preview (tap it to cycle the states), the silence delay (0.5–5 s), the excluded apps (picker with search, _Detect again_), and a **Test** screen with Compose, View and password fields.
 
 To re-skin the button, replace `app/src/main/res/drawable/ic_handy_button.xml` (any vector or bitmap drawable; it is drawn centered at ~60 % of the button). It is the hand from the desktop logo (`src/components/icons/HandyHand.tsx`, same artwork as `src-tauri/icons`). Colors are in `res/values/colors.xml`.
 
@@ -122,7 +133,8 @@ Run with Gboard as the keyboard. For each item, also check that the button never
 
 1. **Handy › Test** screen
    - [ ] The button appears on _Single line_, _Multi-line_ and _Classic EditText_; never on _Password_.
-   - [ ] On an empty field, the placeholder is replaced, not merged ("Bonjour depuis Handy…" only).
+   - [ ] Dictate a sentence in French, then one in English: both are transcribed in their language, with punctuation.
+   - [ ] On an empty field, the placeholder is replaced, not merged (only your sentence).
    - [ ] With text and the cursor in the middle, the text is inserted at the cursor with spaces on both sides, and the cursor ends up right after it.
    - [ ] With a word selected, the selection is replaced.
    - [ ] Tap → ring pulses with your voice → stops after the silence delay → spinner → check.
@@ -139,26 +151,16 @@ Run with Gboard as the keyboard. For each item, also check that the button never
 10. **Lock screen / notification shade / launcher search:** no button.
 11. **Settings:** opacity and size changes apply to the live button. The button dims to ~40 % after 3 s without interaction.
 12. **Battery:** after a few minutes idle, _Settings › Battery › Handy_ shows near-zero usage.
+13. **Model:** the first dictation after installing the model (or after 5 min idle) takes a few seconds longer; the next ones are fast. Delete the model in settings → tapping the button explains that it must be downloaded and opens the settings.
+14. **Claude:** with post-processing on, say "euh alors la réunion est à trois heures virgule pas quatre heures point" → you get something like "La réunion est à 3 h, pas 4 h." With a wrong API key, the raw transcript is inserted and a toast says post-processing failed. Turn on airplane mode: transcription still works (on-device) and the raw text is inserted.
 
 ## What's next
 
-To plug in real transcription (Whisper / Parakeet, like the desktop app):
-
-1. **Pick the engine.** Either [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), which ships an Android AAR and runs Parakeet TDT, Whisper and Moonshine ONNX exports and is the closest match to `transcribe-rs` on desktop, or whisper.cpp through a small JNI wrapper (what `transcribe-cpp` wraps on desktop; GGML/GGUF models, Vulkan on recent devices).
-2. **Model manager:** download, store and select models like `src-tauri/src/managers/model.rs` does (same URLs on `blob.handy.computer`), with progress UI in the settings and a check for free space.
-3. **Implement `Transcriber`** (e.g. `SherpaTranscriber`), keep the loaded model in memory while the service runs (unload on `onTrimMemory`), and run inference on `Dispatchers.Default`.
-4. **VAD:** replace `EnergyVad` with Silero (the same `silero_vad_v4.onnx` as desktop) for auto-stop and to trim silence before inference.
-5. **Swap the pipeline** in `HandyAccessibilityService.onServiceConnected`.
-
-To plug in Claude post-processing (your API key + custom prompt):
-
-1. **`ClaudePostProcessor : PostProcessor`:** `POST https://api.anthropic.com/v1/messages` with `x-api-key`, `anthropic-version: 2023-06-01`, a Haiku model id, your custom prompt as `system` and the transcript as the user message. Return the text block, or the raw transcript on error or timeout (~5 s) so a dictation never gets lost.
-2. **Settings:** API key (stored encrypted with an Android Keystore key, never logged, excluded from backups; `allowBackup` is already `false`), model, custom prompt with the desktop default, and an on/off toggle. Possibly a second gesture for "with post-processing", like desktop's `--toggle-post-process`.
-3. **Manifest:** add the `INTERNET` permission (deliberately absent today: the app currently makes no network calls).
-4. **Tests:** request building and response parsing with a fake HTTP layer.
-
-Other follow-ups:
-
+- **Silero VAD:** replace `EnergyVad` with Silero (the same `silero_vad_v4.onnx` as desktop; sherpa-onnx has a VAD API) for more reliable auto-stop, and trim silence before inference.
+- **More models:** a model picker like desktop's (Whisper small/turbo via sherpa-onnx, Parakeet V2 for English only), and a setting for the unload delay.
+- **Post-processing shortcut:** a second gesture (e.g. double tap) for "with Claude" vs. raw, like desktop's `--toggle-post-process`, and several saved prompts.
+- **Streaming Claude output** for long dictations, and a request timeout setting (20 s today).
+- **Download in a foreground service** so the model download survives leaving the settings screen for a long time.
 - Instrumented tests for `TextInserter` against View, Compose and WebView fields.
-- A release signing config and R8 rules once real engines are added.
+- A release signing config and R8 rules (the debug APK is unminified).
 - The clipboard fallback can't restore the previous clip on Android 10+ when Handy can't read it (only the focused app or the IME may); the transcript then stays on the clipboard.
