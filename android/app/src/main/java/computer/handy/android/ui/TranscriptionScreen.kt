@@ -29,13 +29,13 @@ import java.util.Locale
 /** "Français", "English"… in the phone's language; "Auto" for automatic detection. */
 @Composable
 fun languageName(code: String): String =
-    if (code == ModelCatalog.AUTO) {
-        stringResource(R.string.language_auto)
-    } else {
-        Locale.forLanguageTag(code).getDisplayLanguage(Locale.getDefault())
-            .replaceFirstChar { it.titlecase(Locale.getDefault()) }
-            .ifEmpty { code }
-    }
+    if (code == ModelCatalog.AUTO) stringResource(R.string.language_auto) else displayLanguage(code)
+
+/** Language name in the phone's language, for an ISO 639 code (not "auto"). */
+fun displayLanguage(code: String): String =
+    Locale.forLanguageTag(code).getDisplayLanguage(Locale.getDefault())
+        .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        .ifEmpty { code }
 
 fun LazyListScope.transcriptionItems(app: HandyApp) {
     item { LanguageSection(app) }

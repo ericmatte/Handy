@@ -145,5 +145,5 @@ private fun ModelCard(app: HandyApp, model: SpeechModel) {
 @Composable
 private fun languagesSummary(model: SpeechModel): String = when {
     model.languages.size > 6 -> stringResource(R.string.models_languages_count, model.languages.size)
-    else -> model.languages.joinToString(", ") { languageName(it) }
+    else -> model.languages.joinToString(", ") { displayLanguage(it) }
 }
