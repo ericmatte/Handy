@@ -3,6 +3,7 @@ package computer.handy.android.service
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -26,7 +27,16 @@ class TextInserter(private val context: Context) {
     private val clipboard = context.getSystemService(ClipboardManager::class.java)
     private val main = Handler(Looper.getMainLooper())
 
-    fun insert(node: AccessibilityNodeInfo?, transcript: String): Outcome {
+    /**
+     * @param trailingSpace desktop `append_trailing_space`
+     * @param autoSubmit desktop `auto_submit`: trigger the field's IME action (Enter / Send)
+     */
+    fun insert(
+        node: AccessibilityNodeInfo?,
+        transcript: String,
+        trailingSpace: Boolean = false,
+        autoSubmit: Boolean = false,
+    ): Outcome {
         if (node == null || !node.refresh() || !node.isEditable) {
             copyToClipboard(transcript)
             return Outcome.CLIPBOARD_ONLY
@@ -39,6 +49,7 @@ class TextInserter(private val context: Context) {
             selectionStart = node.textSelectionStart,
             selectionEnd = node.textSelectionEnd,
             insertion = transcript,
+            trailingSpace = trailingSpace,
         )
 
         val setArgs = Bundle().apply {
@@ -52,11 +63,23 @@ class TextInserter(private val context: Context) {
                 putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, merge.cursor)
             }
             node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selArgs)
+            if (autoSubmit) submit(node)
             return Outcome.SET_TEXT
         }
 
         Log.i(TAG, "ACTION_SET_TEXT refused, falling back to paste")
-        return if (paste(node, merge.inserted.ifEmpty { transcript })) Outcome.PASTED else Outcome.CLIPBOARD_ONLY
+        if (!paste(node, merge.inserted.ifEmpty { transcript })) return Outcome.CLIPBOARD_ONLY
+        if (autoSubmit) submit(node)
+        return Outcome.PASTED
+    }
+
+    /** "Enter" for the focused field: its IME action (send, search, go, new line…). API 30+. */
+    private fun submit(node: AccessibilityNodeInfo) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        // Let the app process the new text before it handles the action.
+        main.postDelayed({
+            node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)
+        }, SUBMIT_DELAY_MS)
     }
 
     /**
@@ -95,6 +118,7 @@ class TextInserter(private val context: Context) {
         private const val TAG = "HandyInsert"
         private const val CLIP_LABEL = "Handy"
         private const val RESTORE_DELAY_MS = 500L
+        private const val SUBMIT_DELAY_MS = 150L
         // ClipDescription.EXTRA_IS_SENSITIVE (API 33), inlined for minSdk 29.
         private const val EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE"
     }

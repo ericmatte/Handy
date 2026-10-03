@@ -30,6 +30,9 @@ class OverlayController(
 ) {
     interface Callbacks {
         fun onButtonTap()
+        /** Label of the menu's other dictation action (with/without Claude), or null. */
+        fun alternateActionLabel(): Int?
+        fun onAlternateAction()
         fun onHideInThisApp()
         fun onOpenSettings()
         /** Drag finished; [buttonTop] is the new top edge of the visible circle, in screen px. */
@@ -220,6 +223,9 @@ class OverlayController(
                 dismissMenu()
                 onClick()
             }
+        }
+        callbacks.alternateActionLabel()?.let { label ->
+            layout.addView(item(label) { callbacks.onAlternateAction() })
         }
         layout.addView(item(R.string.menu_hide_in_app) { callbacks.onHideInThisApp() })
         layout.addView(item(R.string.menu_settings) { callbacks.onOpenSettings() })

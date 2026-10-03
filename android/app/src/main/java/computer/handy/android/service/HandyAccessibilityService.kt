@@ -15,6 +15,8 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import android.view.inputmethod.InputMethodManager
 import computer.handy.android.HandyApp
+import computer.handy.android.R
+import computer.handy.android.core.TapAction
 import computer.handy.android.core.Box
 import computer.handy.android.core.ButtonPlacer
 import computer.handy.android.core.ExclusionMatcher
@@ -45,6 +47,7 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private lateinit var prefs: HandyPrefs
+    private lateinit var app: HandyApp
     private lateinit var overlay: OverlayController
     private lateinit var dictation: DictationController
 
@@ -68,13 +71,11 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
         prefs = HandyPrefs(this)
         overlay = OverlayController(this, overlayCallbacks)
         overlay.configure(prefs.buttonSizeDp, prefs.buttonOpacity)
-        val app = application as HandyApp
+        app = application as HandyApp
         dictation = DictationController(
             context = this,
+            app = app,
             overlay = overlay,
-            prefs = prefs,
-            transcriber = app.transcriber,
-            pipelineFactory = app::pipeline,
             scope = scope,
         )
         excluded = prefs.excludedPackages
@@ -239,7 +240,16 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
 
     private val overlayCallbacks = object : OverlayController.Callbacks {
         override fun onButtonTap() {
-            dictation.toggle(target)
+            dictation.toggle(target, withPostProcess = prefs.tapAction == TapAction.TRANSCRIBE_WITH_POST_PROCESS)
+        }
+
+        override fun alternateActionLabel(): Int? {
+            if (!prefs.postProcessEnabled || dictation.isBusy) return null
+            return if (prefs.tapAction == TapAction.TRANSCRIBE) R.string.menu_dictate_with_claude else R.string.menu_dictate_without_claude
+        }
+
+        override fun onAlternateAction() {
+            dictation.toggle(target, withPostProcess = prefs.tapAction == TapAction.TRANSCRIBE)
         }
 
         override fun onHideInThisApp() {
@@ -270,6 +280,7 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
                 excluded = prefs.excludedPackages
                 schedule(DEBOUNCE_MS)
             }
+            HandyPrefs.KEY_UNLOAD -> dictation.scheduleUnload()
             HandyPrefs.KEY_OPACITY, HandyPrefs.KEY_SIZE -> {
                 overlay.configure(prefs.buttonSizeDp, prefs.buttonOpacity)
                 schedule(DEBOUNCE_MS)
@@ -300,7 +311,7 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
         tornDown = true
         main.removeCallbacksAndMessages(null)
         prefs.unregisterListener(this)
-        dictation.cancel()
+        dictation.release()
         overlay.destroy()
         scope.cancel()
     }

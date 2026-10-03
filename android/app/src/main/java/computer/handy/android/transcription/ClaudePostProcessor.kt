@@ -31,10 +31,10 @@ class ClaudePostProcessor(
                 .apply { request.system?.let { system(it) } }
                 .addUserMessage(request.user)
                 .build()
-            client.messages().create(params).content()
+            val text = client.messages().create(params).content()
                 .mapNotNull { block -> block.text().orElse(null)?.text() }
                 .joinToString("")
-                .trim()
+            PostProcessPrompt.cleanResponse(text)
         } finally {
             client.close()
         }
@@ -42,6 +42,20 @@ class ClaudePostProcessor(
 
     companion object {
         const val DEFAULT_MODEL = "claude-haiku-4-5"
+
+        /** Model ids available to this API key (desktop fetches the provider's /models too). */
+        suspend fun listModels(apiKey: String): List<String> = withContext(Dispatchers.IO) {
+            val client = AnthropicOkHttpClient.builder()
+                .apiKey(apiKey)
+                .timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
+                .build()
+            try {
+                client.models().list().autoPager().map { it.id() }.toList()
+            } finally {
+                client.close()
+            }
+        }
+
         private const val MAX_TOKENS = 4096L
         private const val TIMEOUT_SECONDS = 20L
     }

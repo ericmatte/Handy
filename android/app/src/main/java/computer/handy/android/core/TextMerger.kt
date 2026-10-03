@@ -21,6 +21,7 @@ object TextMerger {
      * @param selectionStart `textSelectionStart`, -1 when unknown
      * @param selectionEnd `textSelectionEnd`, -1 when unknown
      * @param insertion the dictated text
+     * @param trailingSpace desktop's `append_trailing_space`: always end with a space
      */
     fun merge(
         existing: String?,
@@ -29,6 +30,7 @@ object TextMerger {
         selectionStart: Int,
         selectionEnd: Int,
         insertion: String,
+        trailingSpace: Boolean = false,
     ): MergeResult {
         val current = when {
             existing == null -> ""
@@ -63,7 +65,7 @@ object TextMerger {
         val after = current.substring(end)
 
         val leading = if (needsSpaceBefore(before, toInsert)) " " else ""
-        val trailing = if (needsSpaceAfter(toInsert, after)) " " else ""
+        val trailing = if (needsSpaceAfter(toInsert, after) || (trailingSpace && after.firstOrNull()?.isWhitespace() != true)) " " else ""
         val inserted = leading + toInsert + trailing
 
         return MergeResult(before + inserted + after, before.length + inserted.length, inserted)

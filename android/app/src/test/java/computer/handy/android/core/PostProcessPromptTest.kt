@@ -41,4 +41,12 @@ class PostProcessPromptTest {
         assertTrue(PostProcessPrompt.DEFAULT.contains("five dollars → \$5"))
         assertTrue(PostProcessPrompt.DEFAULT.endsWith("Return only the cleaned text."))
     }
+
+    @Test
+    fun `response cleanup drops a think block and invisible characters`() {
+        assertEquals("Bonjour.", PostProcessPrompt.cleanResponse("<think>reasoning</think>\n Bon\u200Bjour.\uFEFF"))
+        assertEquals("Plain", PostProcessPrompt.cleanResponse("  Plain  "))
+        // An unterminated think block is left alone, like on desktop.
+        assertEquals("<think>oops", PostProcessPrompt.cleanResponse("<think>oops"))
+    }
 }

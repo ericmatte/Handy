@@ -1,30 +1,42 @@
 package computer.handy.android.transcription
 
 import android.util.Log
+import computer.handy.android.core.TextCleanup
 
-/** Recording -> transcription -> post-processing. */
+/**
+ * Transcription -> desktop text cleanup (custom words, fillers, stutters) -> optional
+ * post-processing, in the same order as desktop Handy.
+ */
 class DictationPipeline(
     private val transcriber: Transcriber,
-    private val postProcessor: PostProcessor,
+    private val cleanup: TextCleanup.Options,
+    /** null for a plain transcription (desktop's "transcribe" shortcut). */
+    private val postProcessor: PostProcessor?,
 ) {
     data class Result(
+        /** What to insert. */
         val text: String,
-        /** Post-processing was attempted and failed: [text] is the raw transcript. */
+        /** The cleaned transcript before post-processing. */
+        val transcript: String,
+        val postProcessedText: String? = null,
+        /** Post-processing was attempted and failed: [text] is the transcript. */
         val postProcessFailed: Boolean = false,
     )
 
     suspend fun run(pcm: ShortArray, sampleRate: Int): Result {
-        val raw = transcriber.transcribe(pcm, sampleRate).trim()
-        if (raw.isEmpty()) return Result("")
+        val raw = transcriber.transcribe(pcm, sampleRate)
+        val cleaned = TextCleanup.process(raw.text, raw.language, cleanup)
+        if (cleaned.isBlank()) return Result("", "")
+        val processor = postProcessor ?: return Result(cleaned, cleaned)
         return try {
-            val processed = postProcessor.process(raw).trim()
-            // An empty rewrite would silently lose the dictation: keep the raw text instead.
-            if (processed.isEmpty()) Result(raw) else Result(processed)
+            val processed = processor.process(cleaned).trim()
+            // An empty rewrite would silently lose the dictation: keep the transcript instead.
+            if (processed.isEmpty()) Result(cleaned, cleaned) else Result(processed, cleaned, processed)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.w("HandyPipeline", "Post-processing failed, keeping the raw transcript", e)
-            Result(raw, postProcessFailed = true)
+            Log.w("HandyPipeline", "Post-processing failed, keeping the transcript", e)
+            Result(cleaned, cleaned, postProcessFailed = true)
         }
     }
 }

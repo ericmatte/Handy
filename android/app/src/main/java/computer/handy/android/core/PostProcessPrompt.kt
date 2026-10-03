@@ -21,6 +21,19 @@ object PostProcessPrompt {
         }
     }
 
+    /**
+     * Desktop's response cleanup (actions.rs): drop a leading `<think>…</think>` block and
+     * invisible characters some models insert.
+     */
+    fun cleanResponse(raw: String): String {
+        var text = raw.trimStart()
+        if (text.startsWith("<think>")) {
+            val end = text.indexOf("</think>")
+            if (end >= 0) text = text.substring(end + "</think>".length).trimStart()
+        }
+        return text.filterNot { it == '\u200B' || it == '\u200C' || it == '\u200D' || it == '\uFEFF' }.trim()
+    }
+
     /** Desktop Handy's default "Improve transcriptions" prompt (src-tauri/src/settings.rs). */
     val DEFAULT: String = """
         <transcript>

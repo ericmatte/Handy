@@ -138,4 +138,13 @@ class TextMergerTest {
         assertEquals("Ok 👍 merci", r.text)
         assertEquals("Ok 👍 merci".length, r.cursor)
     }
+
+    @Test
+    fun `trailing space option always ends with a space`() {
+        val r = TextMerger.merge("", false, null, 0, 0, "Hello", trailingSpace = true)
+        assertEquals("Hello ", r.text)
+        assertEquals(6, r.cursor)
+        // No double space when the text after already starts with one.
+        assertEquals("Hello big world", TextMerger.merge("Hello world", false, null, 5, 5, "big", trailingSpace = true).text)
+    }
 }
