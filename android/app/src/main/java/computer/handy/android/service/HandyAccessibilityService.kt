@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.util.TypedValue
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
@@ -22,6 +23,7 @@ import computer.handy.android.core.ButtonPlacer
 import computer.handy.android.core.ExclusionMatcher
 import computer.handy.android.core.FieldInfo
 import computer.handy.android.core.SensitiveFieldDetector
+import computer.handy.android.core.TreeSearch
 import computer.handy.android.overlay.OverlayController
 import computer.handy.android.settings.HandyPrefs
 import computer.handy.android.settings.InstalledApps
@@ -55,6 +57,9 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
     private var launchers: Set<String> = emptySet()
     private var imePackages: Set<String> = emptySet()
     private var extendedEvents = false
+
+    /** Last editable node an event came from (see [resolveFocusedField]). */
+    private var eventCandidate: AccessibilityNodeInfo? = null
 
     /** The field the button is attached to. */
     private var target: AccessibilityNodeInfo? = null
@@ -103,6 +108,20 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_FOCUSED,
+            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED,
+            AccessibilityEvent.TYPE_VIEW_CLICKED,
+            -> {
+                // Compose and Chrome expose fields as virtual nodes that findFocus(FOCUS_INPUT)
+                // often doesn't return: remember the field the event came from.
+                val source = event.source
+                if (source?.isEditable == true) {
+                    eventCandidate = source
+                } else if (event.eventType == AccessibilityEvent.TYPE_VIEW_FOCUSED && source != null) {
+                    eventCandidate = null
+                }
+                schedule(DEBOUNCE_MS)
+            }
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
                 // Typing in a multi-line field scrolls the field itself: not a reason to hide.
                 val source = event.source
@@ -139,9 +158,9 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
             return
         }
 
-        val node = findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+        val node = resolveFocusedField()
         val pkg = node?.packageName?.toString()
-        if (node == null || !node.isEditable || !isEligible(node, pkg)) {
+        if (node == null || !isEligible(node, pkg)) {
             detach()
             return
         }
@@ -158,12 +177,39 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
         placeFor(node, pkg)
     }
 
+    /**
+     * The editable field that has input focus, or null. Classic Views answer findFocus directly;
+     * Jetpack Compose apps (e.g. Claude) and Chrome/WebView often return their host view instead,
+     * so fall back to the field the last focus/click/selection event came from, then to a
+     * bounded search of the focused host for a focused editable node.
+     */
+    private fun resolveFocusedField(): AccessibilityNodeInfo? {
+        val focus = findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+        if (focus?.isEditable == true) return focus
+
+        eventCandidate?.let { candidate ->
+            val sameWindow = focus == null || focus.windowId == candidate.windowId
+            if (sameWindow && candidate.refresh() && candidate.isEditable && candidate.isFocused) return candidate
+            eventCandidate = null
+        }
+
+        val root = focus ?: return null
+        val found = TreeSearch.findFirst(
+            root,
+            children = { node -> (0 until node.childCount).mapNotNull { node.getChild(it) } },
+            limit = TREE_SEARCH_LIMIT,
+        ) { it.isEditable && it.isFocused }
+        if (found == null) Log.d(TAG, "No editable field under focused ${root.className} in ${root.packageName}")
+        return found
+    }
+
     private fun isEligible(node: AccessibilityNodeInfo, pkg: String?): Boolean {
         if (node.window?.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) return false
         val ownTestScreen = pkg == packageName && TestActivity.isVisible
         if (!ownTestScreen &&
             ExclusionMatcher.isExcluded(pkg, packageName, launchers, excluded)
         ) {
+            Log.d(TAG, "Field in $pkg skipped: excluded app")
             return false
         }
         if (getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true) return false
@@ -175,7 +221,9 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
             viewIdResourceName = node.viewIdResourceName,
             contentDescription = node.contentDescription?.toString(),
         )
-        return SensitiveFieldDetector.isEligible(field)
+        val eligible = SensitiveFieldDetector.isEligible(field)
+        if (!eligible) Log.d(TAG, "Field in $pkg skipped: sensitive (hint=${field.hint}, id=${field.viewIdResourceName})")
+        return eligible
     }
 
     private fun placeFor(node: AccessibilityNodeInfo, pkg: String?) {
@@ -322,12 +370,15 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
     private fun pxToDp(px: Int): Int = (px / resources.displayMetrics.density).toInt()
 
     companion object {
+        private const val TAG = "HandyA11y"
         private const val DEBOUNCE_MS = 80L
+        private const val TREE_SEARCH_LIMIT = 400
         private const val SCROLL_SETTLE_MS = 400L
 
         /** Always on: what is needed to notice that a field got or lost focus. */
         const val BASE_EVENTS = AccessibilityEvent.TYPE_VIEW_FOCUSED or
             AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED or
+            AccessibilityEvent.TYPE_VIEW_CLICKED or
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
 
         /** Only while an eligible field is focused: keyboard show/hide and scrolling. */

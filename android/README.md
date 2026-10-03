@@ -216,6 +216,11 @@ Run with Gboard as the keyboard. For each item, also check that the button never
 14. **Claude:** with post-processing on and the tap set to _Transcribe and clean up with Claude_, say "euh alors la réunion est à trois heures virgule pas quatre heures point" → you get something like "La réunion est à 3 h, pas 4 h." Long-press › _Dictate without Claude_ gives the plain transcript. Add a second prompt (e.g. "Translate to English: ${output}"), select it, dictate. With a wrong API key, the transcript is inserted and a toast says post-processing failed. In airplane mode, transcription still works (on-device).
 15. **History, sounds, output:** the History screen lists the last dictations with the original and the Claude version. Sounds on: the start chime plays once the mic is ready, the stop chime at the end. Auto submit on in Messages: the message is sent after insertion.
 
+## Troubleshooting
+
+- **The button doesn't appear in an app:** run `adb logcat -s HandyA11y`, then focus the field. The log says whether the field was skipped as sensitive (with its hint and id), skipped because the app is excluded, or not found under the focused view. Field detection uses input focus first, then the field the last focus, click or cursor event came from (Compose apps like Claude, Chrome), then a bounded search of the focused view.
+- **After installing a new APK**, Android sometimes keeps the old accessibility service running: toggle _Handy dictation button_ off and on in the accessibility settings.
+
 ## What's next
 
 - Instrumented tests for `TextInserter` against View, Compose and WebView fields.
