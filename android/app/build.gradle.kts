@@ -106,6 +106,22 @@ if (!sherpaAar.exists() || sha256(sherpaAar) != sherpaSha256) {
     }
 }
 
+// Silero VAD, the same model desktop Handy uses, bundled as an asset (≈0.6 MB).
+val sileroVad = layout.projectDirectory.file("src/main/assets/silero_vad.onnx").asFile
+val sileroSha256 = "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
+if (!sileroVad.exists() || sha256(sileroVad) != sileroSha256) {
+    logger.lifecycle("Downloading Silero VAD")
+    sileroVad.parentFile.mkdirs()
+    downloadFollowingRedirects(
+        "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx",
+        sileroVad,
+    )
+    check(sha256(sileroVad) == sileroSha256) {
+        sileroVad.delete()
+        "Silero VAD checksum mismatch"
+    }
+}
+
 dependencies {
     implementation(files(sherpaAar))
     implementation(libs.anthropic.java)
@@ -117,6 +133,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.kotlinx.coroutines.android)
