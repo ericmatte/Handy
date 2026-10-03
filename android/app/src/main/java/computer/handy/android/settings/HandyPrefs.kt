@@ -2,6 +2,8 @@ package computer.handy.android.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import computer.handy.android.core.PostProcessPrompt
+import computer.handy.android.transcription.ClaudePostProcessor
 
 /** User settings, shared by the settings UI and the accessibility service (same process). */
 class HandyPrefs(context: Context) {
@@ -30,6 +32,20 @@ class HandyPrefs(context: Context) {
     var silenceTimeoutMs: Long
         get() = prefs.getLong(KEY_SILENCE, DEFAULT_SILENCE_MS)
         set(value) = prefs.edit { putLong(KEY_SILENCE, value.coerceIn(MIN_SILENCE_MS, MAX_SILENCE_MS)) }
+
+    /** Rewrite transcripts with Claude (needs an API key, see [SecretStore]). */
+    var postProcessEnabled: Boolean
+        get() = prefs.getBoolean(KEY_POST_PROCESS, false)
+        set(value) = prefs.edit { putBoolean(KEY_POST_PROCESS, value) }
+
+    var claudeModel: String
+        get() = prefs.getString(KEY_CLAUDE_MODEL, null) ?: ClaudePostProcessor.DEFAULT_MODEL
+        set(value) = prefs.edit { putString(KEY_CLAUDE_MODEL, value.trim()) }
+
+    /** `${output}` is replaced by the transcript, as on desktop. */
+    var postProcessPrompt: String
+        get() = prefs.getString(KEY_PROMPT, null) ?: PostProcessPrompt.DEFAULT
+        set(value) = prefs.edit { putString(KEY_PROMPT, value) }
 
     fun addExcluded(packageName: String) {
         excludedPackages = excludedPackages + packageName
@@ -62,6 +78,9 @@ class HandyPrefs(context: Context) {
         const val KEY_SIZE = "button_size_dp"
         const val KEY_SILENCE = "silence_timeout_ms"
         private const val KEY_OFFSET_PREFIX = "offset_"
+        const val KEY_POST_PROCESS = "post_process_enabled"
+        private const val KEY_CLAUDE_MODEL = "claude_model"
+        private const val KEY_PROMPT = "post_process_prompt"
 
         const val DEFAULT_OPACITY = 0.7f
         const val MIN_OPACITY = 0.3f

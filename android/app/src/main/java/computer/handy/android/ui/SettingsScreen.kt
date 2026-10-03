@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -31,6 +32,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Switch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +44,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,16 +57,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import computer.handy.android.HandyApp
 import computer.handy.android.R
 import computer.handy.android.core.AppEntry
+import computer.handy.android.core.PostProcessPrompt
 import computer.handy.android.overlay.ButtonState
 import computer.handy.android.overlay.HandyButtonView
 import computer.handy.android.settings.HandyPrefs
 import computer.handy.android.settings.InstalledApps
+import computer.handy.android.settings.SecretStore
+import computer.handy.android.transcription.ClaudePostProcessor
+import computer.handy.android.transcription.ModelManager
+import computer.handy.android.transcription.ModelState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,8 +82,9 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(prefs: HandyPrefs) {
+fun SettingsScreen(app: HandyApp) {
     val context = LocalContext.current
+    val prefs = app.prefs
 
     var serviceEnabled by remember { mutableStateOf(SystemState.isServiceEnabled(context)) }
     var micGranted by remember { mutableStateOf(SystemState.hasMicPermission(context)) }
@@ -98,6 +111,8 @@ fun SettingsScreen(prefs: HandyPrefs) {
                 item { RestrictedSettingsCard() }
             }
             item { PermissionsCard(micGranted) { micGranted = it } }
+            item { ModelCard(app.models) }
+            item { PostProcessCard(prefs, app.secrets) }
             item { AppearanceCard(prefs) }
             item { RecordingCard(prefs) }
             item { ExclusionsCard(prefs) }
@@ -180,6 +195,136 @@ private fun PermissionsCard(micGranted: Boolean, onMicResult: (Boolean) -> Unit)
             TextButton(onClick = { notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
                 Text(stringResource(R.string.settings_grant_notifications))
             }
+        }
+    }
+}
+
+@Composable
+private fun ModelCard(models: ModelManager) {
+    val state by models.state.collectAsState()
+    Section(stringResource(R.string.settings_model_title)) {
+        Text(stringResource(R.string.settings_model_description), style = MaterialTheme.typography.bodySmall)
+        when (val s = state) {
+            ModelState.Missing -> Button(onClick = models::download) {
+                Text(stringResource(R.string.settings_model_download))
+            }
+            is ModelState.Downloading -> {
+                val fraction = if (s.total > 0) (s.downloaded.toFloat() / s.total).coerceIn(0f, 1f) else 0f
+                LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+                Text(
+                    stringResource(
+                        R.string.settings_model_downloading,
+                        (s.downloaded / 1_000_000).toInt(),
+                        (s.total / 1_000_000).toInt(),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                TextButton(onClick = models::cancel) { Text(stringResource(R.string.settings_model_cancel)) }
+            }
+            ModelState.Extracting -> {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Text(stringResource(R.string.settings_model_extracting), style = MaterialTheme.typography.bodySmall)
+            }
+            ModelState.Ready -> {
+                StatusLine(true, stringResource(R.string.settings_model_ready), "")
+                TextButton(onClick = models::delete) { Text(stringResource(R.string.settings_model_delete)) }
+            }
+            is ModelState.Failed -> {
+                Text(
+                    stringResource(R.string.settings_model_failed, s.message),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Button(onClick = models::download) { Text(stringResource(R.string.settings_model_retry)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PostProcessCard(prefs: HandyPrefs, secrets: SecretStore) {
+    val scope = rememberCoroutineScope()
+    val sample = stringResource(R.string.settings_pp_sample)
+    var enabled by remember { mutableStateOf(prefs.postProcessEnabled) }
+    var apiKey by remember { mutableStateOf(secrets.apiKey) }
+    var model by remember { mutableStateOf(prefs.claudeModel) }
+    var prompt by remember { mutableStateOf(prefs.postProcessPrompt) }
+    var testing by remember { mutableStateOf(false) }
+    var testResult by remember { mutableStateOf<String?>(null) }
+    val errorFormat = stringResource(R.string.settings_pp_test_error)
+
+    Section(stringResource(R.string.settings_pp_title)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.settings_pp_enable), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.settings_pp_explanation), style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(checked = enabled, onCheckedChange = {
+                enabled = it
+                prefs.postProcessEnabled = it
+            })
+        }
+        OutlinedTextField(
+            value = apiKey,
+            onValueChange = {
+                apiKey = it
+                secrets.apiKey = it
+            },
+            label = { Text(stringResource(R.string.settings_pp_api_key)) },
+            supportingText = { Text(stringResource(R.string.settings_pp_api_key_help)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = model,
+            onValueChange = {
+                model = it
+                prefs.claudeModel = it
+            },
+            label = { Text(stringResource(R.string.settings_pp_model)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = prompt,
+            onValueChange = {
+                prompt = it
+                prefs.postProcessPrompt = it
+            },
+            label = { Text(stringResource(R.string.settings_pp_prompt)) },
+            supportingText = { Text(stringResource(R.string.settings_pp_prompt_help)) },
+            minLines = 4,
+            maxLines = 10,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = {
+                prompt = PostProcessPrompt.DEFAULT
+                prefs.postProcessPrompt = prompt
+            }) { Text(stringResource(R.string.settings_pp_reset_prompt)) }
+            OutlinedButton(
+                enabled = apiKey.isNotBlank() && !testing,
+                onClick = {
+                    testing = true
+                    testResult = null
+                    scope.launch {
+                        testResult = try {
+                            ClaudePostProcessor(apiKey.trim(), model, prompt).process(sample)
+                        } catch (e: Exception) {
+                            String.format(errorFormat, e.message ?: e.javaClass.simpleName)
+                        }
+                        testing = false
+                    }
+                },
+            ) {
+                Text(stringResource(if (testing) R.string.settings_pp_testing else R.string.settings_pp_test))
+            }
+        }
+        testResult?.let {
+            Text(stringResource(R.string.settings_pp_test_input, sample), style = MaterialTheme.typography.bodySmall)
+            Text(it, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

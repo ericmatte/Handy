@@ -14,6 +14,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import android.view.inputmethod.InputMethodManager
+import computer.handy.android.HandyApp
 import computer.handy.android.core.Box
 import computer.handy.android.core.ButtonPlacer
 import computer.handy.android.core.ExclusionMatcher
@@ -22,9 +23,6 @@ import computer.handy.android.core.SensitiveFieldDetector
 import computer.handy.android.overlay.OverlayController
 import computer.handy.android.settings.HandyPrefs
 import computer.handy.android.settings.InstalledApps
-import computer.handy.android.transcription.DictationPipeline
-import computer.handy.android.transcription.FakeTranscriber
-import computer.handy.android.transcription.NoOpPostProcessor
 import computer.handy.android.ui.MainActivity
 import computer.handy.android.ui.TestActivity
 import kotlinx.coroutines.CoroutineScope
@@ -70,12 +68,13 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
         prefs = HandyPrefs(this)
         overlay = OverlayController(this, overlayCallbacks)
         overlay.configure(prefs.buttonSizeDp, prefs.buttonOpacity)
+        val app = application as HandyApp
         dictation = DictationController(
             context = this,
             overlay = overlay,
             prefs = prefs,
-            // Swap these two for the real engine and Claude post-processing.
-            pipeline = DictationPipeline(FakeTranscriber(), NoOpPostProcessor),
+            transcriber = app.transcriber,
+            pipelineFactory = app::pipeline,
             scope = scope,
         )
         excluded = prefs.excludedPackages
@@ -276,6 +275,12 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
                 schedule(DEBOUNCE_MS)
             }
         }
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        @Suppress("DEPRECATION") // still delivered for RUNNING_* levels on recent Android
+        if (level >= TRIM_MEMORY_RUNNING_LOW && ::dictation.isInitialized) dictation.releaseModelIfIdle()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {

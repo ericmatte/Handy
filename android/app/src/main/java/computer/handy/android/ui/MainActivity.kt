@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import computer.handy.android.settings.HandyPrefs
+import computer.handy.android.HandyApp
 import computer.handy.android.settings.InstalledApps
 import kotlin.concurrent.thread
 
@@ -14,14 +14,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val prefs = HandyPrefs(this)
+        val app = application as HandyApp
+        val prefs = app.prefs
         if (!prefs.defaultsSeeded) {
-            val app = applicationContext
             thread(name = "handy-seed-exclusions") { InstalledApps.seedDefaultExclusions(app, prefs) }
         }
         setContent {
             HandyTheme {
-                SettingsScreen(prefs)
+                SettingsScreen(app)
             }
         }
     }

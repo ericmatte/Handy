@@ -21,6 +21,8 @@ import computer.handy.android.overlay.ButtonState
 import computer.handy.android.overlay.OverlayController
 import computer.handy.android.settings.HandyPrefs
 import computer.handy.android.transcription.DictationPipeline
+import computer.handy.android.transcription.ModelMissingException
+import computer.handy.android.transcription.SherpaTranscriber
 import computer.handy.android.ui.MainActivity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +40,8 @@ class DictationController(
     private val context: Context,
     private val overlay: OverlayController,
     private val prefs: HandyPrefs,
-    private val pipeline: DictationPipeline,
+    private val transcriber: SherpaTranscriber,
+    private val pipelineFactory: () -> DictationPipeline,
     private val scope: CoroutineScope,
 ) {
     private enum class Phase { IDLE, RECORDING, PROCESSING, FEEDBACK }
@@ -46,6 +49,7 @@ class DictationController(
     private var phase = Phase.IDLE
     private var recorder: AudioRecorder? = null
     private var job: Job? = null
+    private var unloadJob: Job? = null
     private val main = Handler(Looper.getMainLooper())
     private val inserter = TextInserter(context)
 
@@ -75,10 +79,25 @@ class DictationController(
             openSettings()
             return
         }
+        if (!transcriber.isModelInstalled) {
+            job = scope.launch { fail(R.string.error_model_missing) }
+            openSettings()
+            return
+        }
         val rec = AudioRecorder(context).also { recorder = it }
         phase = Phase.RECORDING
         overlay.setState(ButtonState.RECORDING)
         vibrate(VibrationEffect.EFFECT_TICK)
+
+        // Load the model while the user speaks, so it is ready when they stop.
+        unloadJob?.cancel()
+        val preload = scope.launch {
+            try {
+                transcriber.preload()
+            } catch (e: Exception) {
+                Log.w(TAG, "Model preload failed", e)
+            }
+        }
 
         job = scope.launch {
             try {
@@ -100,23 +119,27 @@ class DictationController(
 
                 phase = Phase.PROCESSING
                 overlay.setState(ButtonState.PROCESSING)
-                val text = withContext(Dispatchers.Default) {
-                    pipeline.run(recording.pcm, recording.sampleRate)
+                preload.join()
+                val result = withContext(Dispatchers.Default) {
+                    pipelineFactory().run(recording.pcm, recording.sampleRate)
                 }
-                if (text.isBlank()) {
+                if (result.text.isBlank()) {
                     fail(R.string.error_nothing_heard)
                     return@launch
                 }
 
-                when (inserter.insert(target, text)) {
+                when (inserter.insert(target, result.text)) {
                     TextInserter.Outcome.CLIPBOARD_ONLY -> toast(R.string.toast_copied_to_clipboard)
-                    else -> Unit
+                    else -> if (result.postProcessFailed) toast(R.string.toast_post_process_failed)
                 }
                 succeed()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: MicPermissionException) {
                 fail(R.string.error_mic_permission)
+            } catch (e: ModelMissingException) {
+                fail(R.string.error_model_missing)
+                openSettings()
             } catch (e: MicUnavailableException) {
                 Log.w(TAG, "Microphone unavailable", e)
                 fail(R.string.error_mic_unavailable)
@@ -125,8 +148,25 @@ class DictationController(
                 fail(R.string.error_generic)
             } finally {
                 phase = Phase.IDLE
+                scheduleUnload()
             }
         }
+    }
+
+    /** Frees the model's memory (~650 MB) after a while without dictation. */
+    private fun scheduleUnload() {
+        unloadJob?.cancel()
+        unloadJob = scope.launch {
+            delay(UNLOAD_AFTER_MS)
+            if (!isBusy) transcriber.release()
+        }
+    }
+
+    /** Called on memory pressure: drop the model now unless a dictation needs it. */
+    fun releaseModelIfIdle() {
+        if (isBusy) return
+        unloadJob?.cancel()
+        scope.launch { transcriber.release() }
     }
 
     private suspend fun succeed() {
@@ -171,5 +211,6 @@ class DictationController(
         private const val MIN_SAMPLES = AudioRecorder.SAMPLE_RATE * 3 / 10
         private const val SUCCESS_MS = 900L
         private const val ERROR_MS = 1_200L
+        private const val UNLOAD_AFTER_MS = 5 * 60_000L
     }
 }

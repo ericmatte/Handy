@@ -60,7 +60,7 @@
 
     <!-- Test screen -->
     <string name="test_title">Test Handy</string>
-    <string name="test_intro">Tap a field: the Handy button appears next to it, outside the keyboard. Tap the button, speak, and the (simulated) transcript is inserted at the cursor.</string>
+    <string name="test_intro">Tap a field: the Handy button appears next to it, outside the keyboard. Tap the button, speak, and the transcript is inserted at the cursor. Download the speech model in settings first.</string>
     <string name="test_field_single">Single line</string>
     <string name="test_field_multi">Multi-line</string>
     <string name="test_field_multi_hint">The placeholder must not be merged with the text</string>
@@ -68,4 +68,32 @@
     <string name="test_field_view_hint">Type or dictate here</string>
     <string name="test_field_password">Password</string>
     <string name="test_password_note">No button should appear on the password field.</string>
+
+    <!-- Speech model and post-processing -->
+    <string name="error_model_missing">Download the speech model in Handy\'s settings first.</string>
+    <string name="toast_post_process_failed">Claude post-processing failed: raw transcript inserted.</string>
+    <string name="settings_model_title">Speech model</string>
+    <string name="settings_model_description">Parakeet V3 (same model as Handy desktop), runs fully on the phone. 25 European languages including French and English, detected automatically. One-time download of about 490 MB (about 680 MB on disk); Wi-Fi recommended. Keep this screen open during the download.</string>
+    <string name="settings_model_download">Download (≈490 MB)</string>
+    <string name="settings_model_downloading">Downloading… %1$d / %2$d MB</string>
+    <string name="settings_model_extracting">Installing… (a few minutes)</string>
+    <string name="settings_model_ready">Model installed</string>
+    <string name="settings_model_delete">Delete model</string>
+    <string name="settings_model_cancel">Cancel</string>
+    <string name="settings_model_failed">Download failed: %1$s</string>
+    <string name="settings_model_retry">Retry</string>
+    <string name="settings_pp_title">Post-processing (Claude)</string>
+    <string name="settings_pp_enable">Clean up with Claude</string>
+    <string name="settings_pp_explanation">Sends the transcript (text only, never audio) to Anthropic with your prompt. If the call fails, the raw transcript is inserted.</string>
+    <string name="settings_pp_api_key">Anthropic API key</string>
+    <string name="settings_pp_api_key_help">Stored encrypted on this phone (Android Keystore).</string>
+    <string name="settings_pp_model">Model</string>
+    <string name="settings_pp_prompt">Prompt</string>
+    <string name="settings_pp_prompt_help">${output} is replaced by the transcript, as on desktop.</string>
+    <string name="settings_pp_reset_prompt">Reset prompt</string>
+    <string name="settings_pp_test">Test</string>
+    <string name="settings_pp_testing">Testing…</string>
+    <string name="settings_pp_sample">euh alors je voulais te dire que la réunion de demain est à trois heures virgule pas à quatre heures point</string>
+    <string name="settings_pp_test_input">Input: %1$s</string>
+    <string name="settings_pp_test_error">Error: %1$s</string>
 </resources>
