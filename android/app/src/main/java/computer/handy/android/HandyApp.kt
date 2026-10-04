@@ -15,7 +15,9 @@ import computer.handy.android.transcription.SpeechModel
 import computer.handy.android.transcription.TranscriptionSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -45,6 +47,34 @@ class HandyApp : Application() {
                 }
             }
         }
+    }
+
+    private var unloadJob: Job? = null
+
+    /** Number of dictations in progress (floating button and keyboard share the model). */
+    @Volatile
+    var activeDictations = 0
+
+    /** A dictation is starting: keep the model loaded. */
+    fun cancelModelUnload() {
+        unloadJob?.cancel()
+    }
+
+    /** Desktop `model_unload_timeout`: free the model's memory after a while without dictation. */
+    fun scheduleModelUnload() {
+        unloadJob?.cancel()
+        val timeout = prefs.modelUnloadTimeout.millis ?: return
+        unloadJob = appScope.launch {
+            delay(timeout)
+            if (activeDictations == 0) transcriber.release()
+        }
+    }
+
+    /** Memory pressure: drop the model now unless a dictation needs it. */
+    fun releaseModelIfIdle() {
+        if (activeDictations > 0) return
+        unloadJob?.cancel()
+        appScope.launch { transcriber.release() }
     }
 
     fun selectedModel(): SpeechModel = ModelCatalog.byId(prefs.selectedModelId) ?: ModelCatalog.DEFAULT

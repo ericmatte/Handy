@@ -53,7 +53,6 @@ class DictationController(
     private var phase = Phase.IDLE
     private var recorder: AudioRecorder? = null
     private var job: Job? = null
-    private var unloadJob: Job? = null
     private val main = Handler(Looper.getMainLooper())
     private val inserter = TextInserter(context)
     private var sounds: FeedbackSounds? = null
@@ -111,7 +110,8 @@ class DictationController(
         vibrate(VibrationEffect.EFFECT_TICK)
 
         // Load the model while the user speaks, so it is ready when they stop.
-        unloadJob?.cancel()
+        app.activeDictations++
+        app.cancelModelUnload()
         val preload = scope.launch {
             try {
                 transcriber.preload()
@@ -206,7 +206,8 @@ class DictationController(
                 fail(R.string.error_generic)
             } finally {
                 phase = Phase.IDLE
-                scheduleUnload()
+                app.activeDictations--
+                app.scheduleModelUnload()
             }
         }
     }
@@ -227,23 +228,6 @@ class DictationController(
         delay(ERROR_MS)
         overlay.setState(ButtonState.IDLE)
         phase = Phase.IDLE
-    }
-
-    /** Desktop `model_unload_timeout`: free the model's memory after a while without dictation. */
-    fun scheduleUnload() {
-        unloadJob?.cancel()
-        val timeout = prefs.modelUnloadTimeout.millis ?: return
-        unloadJob = scope.launch {
-            delay(timeout)
-            if (!isBusy) transcriber.release()
-        }
-    }
-
-    /** Called on memory pressure: drop the model now unless a dictation needs it. */
-    fun releaseModelIfIdle() {
-        if (isBusy) return
-        unloadJob?.cancel()
-        scope.launch { transcriber.release() }
     }
 
     private fun toast(res: Int) = Toast.makeText(context, res, Toast.LENGTH_SHORT).show()

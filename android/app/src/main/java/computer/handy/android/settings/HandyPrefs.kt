@@ -40,6 +40,22 @@ class HandyPrefs(context: Context) {
         get() = prefs.getInt(KEY_SIZE, DEFAULT_SIZE_DP)
         set(value) = prefs.edit { putInt(KEY_SIZE, value.coerceIn(MIN_SIZE_DP, MAX_SIZE_DP)) }
 
+    /** The floating button over text fields (accessibility mode). Off by default: the voice
+     *  keyboard is the main way in. */
+    var floatingButtonEnabled: Boolean
+        get() = prefs.getBoolean(KEY_FLOATING_BUTTON, false)
+        set(value) = prefs.edit { putBoolean(KEY_FLOATING_BUTTON, value) }
+
+    /** Voice keyboard: start listening as soon as it opens. */
+    var imeAutoStart: Boolean
+        get() = prefs.getBoolean(KEY_IME_AUTO_START, true)
+        set(value) = prefs.edit { putBoolean(KEY_IME_AUTO_START, value) }
+
+    /** Voice keyboard: go back to the previous keyboard (Gboard) after inserting the text. */
+    var imeReturnToPrevious: Boolean
+        get() = prefs.getBoolean(KEY_IME_RETURN, true)
+        set(value) = prefs.edit { putBoolean(KEY_IME_RETURN, value) }
+
     var tapAction: TapAction
         get() = enumOr(prefs.getString(KEY_TAP_ACTION, null), TapAction.TRANSCRIBE)
         set(value) = prefs.edit { putString(KEY_TAP_ACTION, value.name) }
@@ -223,6 +239,9 @@ class HandyPrefs(context: Context) {
         const val KEY_OPACITY = "button_opacity"
         const val KEY_SIZE = "button_size_dp"
         private const val KEY_TAP_ACTION = "tap_action"
+        const val KEY_FLOATING_BUTTON = "floating_button_enabled"
+        private const val KEY_IME_AUTO_START = "ime_auto_start"
+        private const val KEY_IME_RETURN = "ime_return_to_previous"
         const val KEY_SILENCE = "silence_timeout_ms"
         private const val KEY_VAD = "vad_enabled"
         private const val KEY_AUDIO_FEEDBACK = "audio_feedback"

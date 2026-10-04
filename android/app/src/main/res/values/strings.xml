@@ -22,7 +22,7 @@
     <string name="notification_recording_title">Handy is listening…</string>
 
     <!-- Settings -->
-    <string name="settings_service_title">Dictation button</string>
+    <string name="settings_service_title">Floating button</string>
     <string name="settings_service_enabled">Service enabled</string>
     <string name="settings_service_disabled">Service disabled</string>
     <string name="settings_service_explanation">Enable “Handy dictation button” in Accessibility settings (Installed apps / Downloaded apps).</string>
@@ -210,4 +210,32 @@
     <string name="history_copy">Copy</string>
     <string name="history_copy_original">Copy original</string>
     <string name="history_copied">Copied</string>
+
+    <!-- Voice keyboard -->
+    <string name="ime_label">Handy voice keyboard</string>
+    <string name="ime_subtype_label">Voice (Handy)</string>
+    <string name="ime_claude_chip">Claude</string>
+    <string name="ime_switch_keyboard">Back to the keyboard</string>
+    <string name="ime_cancel">Cancel</string>
+    <string name="ime_open_handy">Open Handy</string>
+    <string name="ime_status_ready">Tap the hand to speak</string>
+    <string name="ime_status_starting">Starting the microphone…</string>
+    <string name="ime_status_listening">Listening… tap to stop</string>
+    <string name="ime_status_transcribing">Transcribing…</string>
+    <string name="ime_status_post_processing">Cleaning up with Claude…</string>
+    <string name="ime_status_inserted">Inserted</string>
+    <string name="ime_status_sensitive">Voice input is off in password and code fields.</string>
+    <string name="ime_error_no_field">No text field is connected.</string>
+    <string name="settings_ime_title">Voice keyboard (recommended)</string>
+    <string name="settings_ime_enabled">Handy keyboard enabled</string>
+    <string name="settings_ime_disabled">Handy keyboard not enabled</string>
+    <string name="settings_ime_explanation">Keep Gboard as your keyboard. Tap its globe key (or long-press the space bar) to switch to Handy: it listens right away, shows your voice level, types the text and switches back to Gboard. No accessibility service needed.</string>
+    <string name="settings_ime_enable">Enable the Handy keyboard</string>
+    <string name="settings_ime_try">Choose keyboard</string>
+    <string name="settings_ime_auto_start">Start listening right away</string>
+    <string name="settings_ime_auto_start_hint">Off: tap the hand to start.</string>
+    <string name="settings_ime_return">Return to the previous keyboard</string>
+    <string name="settings_ime_return_hint">After inserting the text.</string>
+    <string name="settings_floating_toggle">Show a floating button on text fields</string>
+    <string name="settings_floating_hint">Optional. Needs the accessibility service.</string>
 </resources>

@@ -69,5 +69,19 @@
             android:name=".service.MicrophoneForegroundService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <!-- Voice keyboard: switch to it from Gboard's globe key, it types and switches back. -->
+        <service
+            android:name=".ime.HandyVoiceIme"
+            android:exported="true"
+            android:label="@string/ime_label"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/handy_ime" />
+        </service>
     </application>
 </manifest>

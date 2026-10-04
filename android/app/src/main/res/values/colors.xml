@@ -8,4 +8,8 @@
     <color name="handy_error">#FFD9443A</color>
     <color name="handy_menu_bg">#FFFFFFFF</color>
     <color name="handy_menu_text">#FF2A1A22</color>
+    <color name="ime_background">#FFF3EEF1</color>
+    <color name="ime_text">#FF2A1A22</color>
+    <color name="ime_text_secondary">#FF7A6870</color>
+    <color name="ime_wave_idle">#FFC9B9C0</color>
 </resources>

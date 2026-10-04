@@ -23,11 +23,13 @@ class DictationPipeline(
         val postProcessFailed: Boolean = false,
     )
 
-    suspend fun run(pcm: ShortArray, sampleRate: Int): Result {
+    /** @param onPostProcessing called just before the transcript goes to the post-processor */
+    suspend fun run(pcm: ShortArray, sampleRate: Int, onPostProcessing: () -> Unit = {}): Result {
         val raw = transcriber.transcribe(pcm, sampleRate)
         val cleaned = TextCleanup.process(raw.text, raw.language, cleanup)
         if (cleaned.isBlank()) return Result("", "")
         val processor = postProcessor ?: return Result(cleaned, cleaned)
+        onPostProcessing()
         return try {
             val processed = processor.process(cleaned).trim()
             // An empty rewrite would silently lose the dictation: keep the transcript instead.

@@ -100,3 +100,17 @@ object TextMerger {
     private val CLOSING_PUNCTUATION = setOf('.', ',', ';', ':', '!', '?', ')', ']', '}', '…', '%', '»')
     private val OPENING_PUNCTUATION = setOf('(', '[', '{', '«', '"', '\'', '/', '@', '#')
 }
+
+/** Spacing for text committed through an InputConnection (voice keyboard). */
+object ImeText {
+    /**
+     * @param before text just before the cursor (`getTextBeforeCursor`), selection excluded
+     * @param after text just after the cursor/selection (`getTextAfterCursor`)
+     * @return what to commit so words don't get glued, as [TextMerger] would insert it
+     */
+    fun compose(before: CharSequence?, after: CharSequence?, insertion: String, trailingSpace: Boolean): String {
+        val b = before?.toString() ?: ""
+        val a = after?.toString() ?: ""
+        return TextMerger.merge(b + a, false, null, b.length, b.length, insertion, trailingSpace).inserted
+    }
+}
