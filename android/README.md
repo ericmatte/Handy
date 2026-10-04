@@ -45,7 +45,7 @@ To dictate, open Gboard in any field and tap its **globe key** (shown once sever
 
 ### 4. Optional: the floating button
 
-Turn on _Show a floating button on text fields_ in Handy, then enable the accessibility service: **Settings › Accessibility › Installed apps (or Downloaded apps) › Handy dictation button › On.** The _Open accessibility settings_ button in Handy goes straight there.
+Under _How to dictate_ in Handy, pick **Floating button** (the keyboard's settings are then hidden, and vice versa), then enable the accessibility service: **Settings › Accessibility › Installed apps (or Downloaded apps) › Handy dictation button › On.** The _Open accessibility settings_ button in Handy goes straight there.
 
 On Android 13+ a sideloaded app's accessibility switch is greyed out with a "Restricted setting" dialog until you allow it:
 
@@ -76,11 +76,12 @@ In **Post-processing (Claude)**:
 ### Voice keyboard
 
 - Switch to Handy from Gboard (globe key or long-press on space). It listens right away (turn off _Start listening right away_ to tap first); the start chime plays once the mic is live, if sounds are on.
-- The bars scroll from right to left, one per 30 ms of audio: flat dim bars mean silence, pink bars that follow your voice mean Handy hears you cleanly.
+- The bars scroll from right to left, one per 60 ms of audio: flat dim bars mean silence, pink bars that follow your voice mean Handy hears you cleanly.
 - Recording stops after the silence timeout, or tap the hand. The status line shows _Transcribing…_, then _Cleaning up with Claude…_ when post-processing is on.
 - The text is inserted at the cursor with desktop's spacing rules, then Handy switches back to Gboard (turn off _Return to the previous keyboard_ to stay).
 - The **Claude** chip (shown when post-processing is configured) toggles Claude for this and later dictations; it is the same setting as the button's tap action.
-- The keyboard icon goes back to Gboard; ✕ cancels and goes back. Leaving the field or closing the keyboard cancels a recording.
+- The keyboard icon cancels and goes back to Gboard; the gear opens Handy's settings. Leaving the field or closing the keyboard cancels a recording.
+- A short vibration when the keyboard opens and when recording stops.
 - On password, PIN and code fields Handy doesn't record and says so.
 
 ### Floating button
@@ -212,7 +213,7 @@ To re-skin the button, replace `app/src/main/res/drawable/ic_handy_button.xml` (
 1. Enable the Handy keyboard from Handy's home screen; the status turns to _Handy keyboard enabled_.
 2. In Messages, Chrome (address bar and a web form) and the Claude app: open Gboard, switch to Handy with the globe key. It starts listening, the bars move with your voice and stay flat when you're silent. Stop talking: the text appears at the cursor and Gboard comes back.
 3. Type "Bonjour" with Gboard, switch to Handy, say "comment ça va": the result is "Bonjour comment ça va" with a single space.
-4. Tap the hand while listening: it stops and transcribes. Tap ✕ while listening: nothing is inserted and Gboard comes back.
+4. Tap the hand while listening: it stops and transcribes. Tap the keyboard icon while listening: nothing is inserted and Gboard comes back. The gear opens Handy.
 5. With Claude configured, toggle the **Claude** chip and dictate: the status shows _Cleaning up with Claude…_ and the cleaned text is inserted.
 6. On a password field, switch to Handy: it says voice input is off and doesn't record.
 7. Turn off _Start listening right away_: Handy waits for a tap. Turn off _Return to the previous keyboard_: Handy stays after inserting.
@@ -220,7 +221,7 @@ To re-skin the button, replace `app/src/main/res/drawable/ic_handy_button.xml` (
 
 ### Floating button
 
-Turn on _Show a floating button on text fields_ and run with Gboard as the keyboard. For each item, also check that the button never covers the keyboard or the typed text.
+Pick _Floating button_ under _How to dictate_ and run with Gboard as the keyboard. For each item, also check that the button never covers the keyboard or the typed text.
 
 1. **Handy › Test** screen
    - [ ] The button appears on _Single line_, _Multi-line_ and _Classic EditText_; never on _Password_.

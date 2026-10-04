@@ -6,4 +6,6 @@
     <color name="ime_text">#FFF4E9ED</color>
     <color name="ime_text_secondary">#FFB09BA4</color>
     <color name="ime_wave_idle">#FF54474D</color>
+    <color name="logo_primary">#FFF28CBB</color>
+    <color name="logo_stroke">#FFFAD1ED</color>
 </resources>

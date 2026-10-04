@@ -12,4 +12,6 @@
     <color name="ime_text">#FF2A1A22</color>
     <color name="ime_text_secondary">#FF7A6870</color>
     <color name="ime_wave_idle">#FFC9B9C0</color>
+    <color name="logo_primary">#FFFAA2CA</color>
+    <color name="logo_stroke">#FF382731</color>
 </resources>

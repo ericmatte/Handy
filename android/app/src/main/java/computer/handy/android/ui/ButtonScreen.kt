@@ -35,7 +35,8 @@ import computer.handy.android.settings.HandyPrefs
 import kotlin.math.roundToInt
 
 fun LazyListScope.buttonItems(app: HandyApp) {
-    item { AppearanceSection(app.prefs) }
+    // The button's look only matters in floating-button mode.
+    if (app.prefs.floatingButtonEnabled) item { AppearanceSection(app.prefs) }
     item { RecordingSection(app.prefs) }
     item { SoundsSection(app.prefs) }
     item { OutputSection(app.prefs) }

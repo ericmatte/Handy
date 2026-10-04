@@ -6,11 +6,13 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
@@ -34,6 +36,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -53,7 +56,18 @@ fun SettingsScreen(app: HandyApp) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(screen.titleRes())) },
+                title = {
+                    val floating by rememberPref(app.prefs) { app.prefs.floatingButtonEnabled }
+                    if (screen == Screen.HOME) {
+                        Image(
+                            painterResource(R.drawable.handy_text_logo),
+                            contentDescription = stringResource(R.string.app_name),
+                            modifier = Modifier.height(36.dp),
+                        )
+                    } else {
+                        Text(stringResource(screen.titleRes(floating)))
+                    }
+                },
                 navigationIcon = {
                     if (screen != Screen.HOME) {
                         IconButton(onClick = { screen = Screen.HOME }) {
@@ -87,12 +101,12 @@ fun SettingsScreen(app: HandyApp) {
     }
 }
 
-private fun Screen.titleRes(): Int = when (this) {
+private fun Screen.titleRes(floating: Boolean): Int = when (this) {
     Screen.HOME -> R.string.app_name
     Screen.MODELS -> R.string.screen_models
     Screen.TRANSCRIPTION -> R.string.screen_transcription
     Screen.POST_PROCESS -> R.string.screen_post_process
-    Screen.BUTTON -> R.string.screen_button
+    Screen.BUTTON -> if (floating) R.string.screen_button else R.string.screen_behaviour
     Screen.EXCLUSIONS -> R.string.screen_exclusions
     Screen.HISTORY -> R.string.screen_history
 }
@@ -119,14 +133,18 @@ private fun LazyListScope.homeItems(app: HandyApp, navigate: (Screen) -> Unit) {
                 stringResource(R.string.screen_post_process),
                 stringResource(if (pp) R.string.state_on else R.string.state_off),
             ) { navigate(Screen.POST_PROCESS) }
+            val floating by rememberPref(prefs) { prefs.floatingButtonEnabled }
             HorizontalDivider()
-            NavRow(stringResource(R.string.screen_button), null) { navigate(Screen.BUTTON) }
-            HorizontalDivider()
-            val excluded by rememberPref(prefs) { prefs.excludedPackages }
-            NavRow(
-                stringResource(R.string.screen_exclusions),
-                LocalContext.current.resources.getQuantityString(R.plurals.home_excluded_count, excluded.size, excluded.size),
-            ) { navigate(Screen.EXCLUSIONS) }
+            NavRow(stringResource(Screen.BUTTON.titleRes(floating)), null) { navigate(Screen.BUTTON) }
+            // Excluded apps only apply to the floating button.
+            if (floating) {
+                HorizontalDivider()
+                val excluded by rememberPref(prefs) { prefs.excludedPackages }
+                NavRow(
+                    stringResource(R.string.screen_exclusions),
+                    LocalContext.current.resources.getQuantityString(R.plurals.home_excluded_count, excluded.size, excluded.size),
+                ) { navigate(Screen.EXCLUSIONS) }
+            }
             HorizontalDivider()
             val history by app.history.entries.collectAsState()
             NavRow(
@@ -163,43 +181,51 @@ private fun StatusCards(app: HandyApp) {
     var returnToPrevious by rememberPref(prefs) { prefs.imeReturnToPrevious }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Section(stringResource(R.string.settings_ime_title)) {
-            StatusLine(
-                imeEnabled,
-                stringResource(R.string.settings_ime_enabled),
-                stringResource(R.string.settings_ime_disabled),
-            )
-            Hint(stringResource(R.string.settings_ime_explanation))
-            if (imeEnabled) {
-                OutlinedButton(onClick = { SystemState.showKeyboardPicker(context) }) {
-                    Text(stringResource(R.string.settings_ime_try))
-                }
-            } else {
-                Button(onClick = { context.startActivity(SystemState.inputMethodSettingsIntent()) }) {
-                    Text(stringResource(R.string.settings_ime_enable))
-                }
-            }
-            SwitchRow(
-                stringResource(R.string.settings_ime_auto_start),
-                autoStart,
-                { prefs.imeAutoStart = it; autoStart = it },
-                subtitle = stringResource(R.string.settings_ime_auto_start_hint),
-            )
-            SwitchRow(
-                stringResource(R.string.settings_ime_return),
-                returnToPrevious,
-                { prefs.imeReturnToPrevious = it; returnToPrevious = it },
-                subtitle = stringResource(R.string.settings_ime_return_hint),
-            )
+        // One way to dictate at a time: the other mode's settings and permissions are hidden.
+        Section(stringResource(R.string.settings_mode_title)) {
+            RadioRow(
+                stringResource(R.string.settings_mode_keyboard),
+                stringResource(R.string.settings_mode_keyboard_hint),
+                selected = !floating,
+            ) { prefs.floatingButtonEnabled = false; floating = false }
+            RadioRow(
+                stringResource(R.string.settings_mode_floating),
+                stringResource(R.string.settings_mode_floating_hint),
+                selected = floating,
+            ) { prefs.floatingButtonEnabled = true; floating = true }
         }
-        Section(stringResource(R.string.settings_service_title)) {
-            SwitchRow(
-                stringResource(R.string.settings_floating_toggle),
-                floating,
-                { prefs.floatingButtonEnabled = it; floating = it },
-                subtitle = stringResource(R.string.settings_floating_hint),
-            )
-            if (floating) {
+        if (!floating) {
+            Section(stringResource(R.string.settings_ime_title)) {
+                StatusLine(
+                    imeEnabled,
+                    stringResource(R.string.settings_ime_enabled),
+                    stringResource(R.string.settings_ime_disabled),
+                )
+                Hint(stringResource(R.string.settings_ime_explanation))
+                if (imeEnabled) {
+                    OutlinedButton(onClick = { SystemState.showKeyboardPicker(context) }) {
+                        Text(stringResource(R.string.settings_ime_try))
+                    }
+                } else {
+                    Button(onClick = { context.startActivity(SystemState.inputMethodSettingsIntent()) }) {
+                        Text(stringResource(R.string.settings_ime_enable))
+                    }
+                }
+                SwitchRow(
+                    stringResource(R.string.settings_ime_auto_start),
+                    autoStart,
+                    { prefs.imeAutoStart = it; autoStart = it },
+                    subtitle = stringResource(R.string.settings_ime_auto_start_hint),
+                )
+                SwitchRow(
+                    stringResource(R.string.settings_ime_return),
+                    returnToPrevious,
+                    { prefs.imeReturnToPrevious = it; returnToPrevious = it },
+                    subtitle = stringResource(R.string.settings_ime_return_hint),
+                )
+            }
+        } else {
+            Section(stringResource(R.string.settings_service_title)) {
                 StatusLine(
                     serviceEnabled,
                     stringResource(R.string.settings_service_enabled),
@@ -210,12 +236,12 @@ private fun StatusCards(app: HandyApp) {
                     Text(stringResource(R.string.settings_open_accessibility))
                 }
             }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && floating && !serviceEnabled) {
-            Section(stringResource(R.string.settings_restricted_title)) {
-                Hint(stringResource(R.string.settings_restricted_body))
-                OutlinedButton(onClick = { context.startActivity(SystemState.appDetailsIntent(context)) }) {
-                    Text(stringResource(R.string.settings_open_app_info))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !serviceEnabled) {
+                Section(stringResource(R.string.settings_restricted_title)) {
+                    Hint(stringResource(R.string.settings_restricted_body))
+                    OutlinedButton(onClick = { context.startActivity(SystemState.appDetailsIntent(context)) }) {
+                        Text(stringResource(R.string.settings_open_app_info))
+                    }
                 }
             }
         }

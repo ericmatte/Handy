@@ -100,6 +100,24 @@ fun NavRow(title: String, value: String?, onClick: () -> Unit) {
     }
 }
 
+/** One option of an inline single choice, with an optional explanation. */
+@Composable
+fun RadioRow(title: String, subtitle: String?, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Column(Modifier.padding(start = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            subtitle?.let { Hint(it) }
+        }
+    }
+}
+
 /** Single-choice dialog, used instead of dropdowns (stable API, works with long lists). */
 @Composable
 fun <T> ChoiceDialog(
