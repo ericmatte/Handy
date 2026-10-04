@@ -158,6 +158,10 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
             return
         }
 
+        if (!prefs.floatingButtonEnabled) {
+            detach()
+            return
+        }
         val node = resolveFocusedField()
         val pkg = node?.packageName?.toString()
         if (node == null || !isEligible(node, pkg)) {
@@ -328,7 +332,8 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
                 excluded = prefs.excludedPackages
                 schedule(DEBOUNCE_MS)
             }
-            HandyPrefs.KEY_UNLOAD -> dictation.scheduleUnload()
+            HandyPrefs.KEY_UNLOAD -> app.scheduleModelUnload()
+            HandyPrefs.KEY_FLOATING_BUTTON -> schedule(DEBOUNCE_MS)
             HandyPrefs.KEY_OPACITY, HandyPrefs.KEY_SIZE -> {
                 overlay.configure(prefs.buttonSizeDp, prefs.buttonOpacity)
                 schedule(DEBOUNCE_MS)
@@ -339,7 +344,7 @@ class HandyAccessibilityService : AccessibilityService(), SharedPreferences.OnSh
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         @Suppress("DEPRECATION") // still delivered for RUNNING_* levels on recent Android
-        if (level >= TRIM_MEMORY_RUNNING_LOW && ::dictation.isInitialized) dictation.releaseModelIfIdle()
+        if (level >= TRIM_MEMORY_RUNNING_LOW && ::app.isInitialized) app.releaseModelIfIdle()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {

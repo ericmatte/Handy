@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import android.view.inputmethod.InputMethodManager
+import computer.handy.android.ime.HandyVoiceIme
 import computer.handy.android.service.HandyAccessibilityService
 
 /** Read-only checks and intents used by the settings screen. */
@@ -23,11 +25,27 @@ object SystemState {
             }
     }
 
+    /** The Handy voice keyboard is enabled in the system keyboard list. */
+    fun isImeEnabled(context: Context): Boolean {
+        val imm = context.getSystemService(InputMethodManager::class.java) ?: return false
+        return imm.enabledInputMethodList.any {
+            it.packageName == context.packageName && it.serviceName == HandyVoiceIme::class.java.name
+        }
+    }
+
     fun hasMicPermission(context: Context): Boolean =
         context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
     fun accessibilitySettingsIntent(): Intent =
         Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    fun inputMethodSettingsIntent(): Intent =
+        Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    /** The system keyboard picker, to try the Handy keyboard right away. */
+    fun showKeyboardPicker(context: Context) {
+        context.getSystemService(InputMethodManager::class.java)?.showInputMethodPicker()
+    }
 
     fun appDetailsIntent(context: Context): Intent =
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))

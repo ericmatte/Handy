@@ -147,28 +147,71 @@ private fun LazyListScope.homeItems(app: HandyApp, navigate: (Screen) -> Unit) {
 @Composable
 private fun StatusCards(app: HandyApp) {
     val context = LocalContext.current
+    val prefs = app.prefs
     var serviceEnabled by remember { mutableStateOf(SystemState.isServiceEnabled(context)) }
+    var imeEnabled by remember { mutableStateOf(SystemState.isImeEnabled(context)) }
     var micGranted by remember { mutableStateOf(SystemState.hasMicPermission(context)) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         serviceEnabled = SystemState.isServiceEnabled(context)
+        imeEnabled = SystemState.isImeEnabled(context)
         micGranted = SystemState.hasMicPermission(context)
     }
     val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { micGranted = it }
     val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    var floating by rememberPref(prefs) { prefs.floatingButtonEnabled }
+    var autoStart by rememberPref(prefs) { prefs.imeAutoStart }
+    var returnToPrevious by rememberPref(prefs) { prefs.imeReturnToPrevious }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Section(stringResource(R.string.settings_service_title)) {
+        Section(stringResource(R.string.settings_ime_title)) {
             StatusLine(
-                serviceEnabled,
-                stringResource(R.string.settings_service_enabled),
-                stringResource(R.string.settings_service_disabled),
+                imeEnabled,
+                stringResource(R.string.settings_ime_enabled),
+                stringResource(R.string.settings_ime_disabled),
             )
-            Hint(stringResource(R.string.settings_service_explanation))
-            OutlinedButton(onClick = { context.startActivity(SystemState.accessibilitySettingsIntent()) }) {
-                Text(stringResource(R.string.settings_open_accessibility))
+            Hint(stringResource(R.string.settings_ime_explanation))
+            if (imeEnabled) {
+                OutlinedButton(onClick = { SystemState.showKeyboardPicker(context) }) {
+                    Text(stringResource(R.string.settings_ime_try))
+                }
+            } else {
+                Button(onClick = { context.startActivity(SystemState.inputMethodSettingsIntent()) }) {
+                    Text(stringResource(R.string.settings_ime_enable))
+                }
+            }
+            SwitchRow(
+                stringResource(R.string.settings_ime_auto_start),
+                autoStart,
+                { prefs.imeAutoStart = it; autoStart = it },
+                subtitle = stringResource(R.string.settings_ime_auto_start_hint),
+            )
+            SwitchRow(
+                stringResource(R.string.settings_ime_return),
+                returnToPrevious,
+                { prefs.imeReturnToPrevious = it; returnToPrevious = it },
+                subtitle = stringResource(R.string.settings_ime_return_hint),
+            )
+        }
+        Section(stringResource(R.string.settings_service_title)) {
+            SwitchRow(
+                stringResource(R.string.settings_floating_toggle),
+                floating,
+                { prefs.floatingButtonEnabled = it; floating = it },
+                subtitle = stringResource(R.string.settings_floating_hint),
+            )
+            if (floating) {
+                StatusLine(
+                    serviceEnabled,
+                    stringResource(R.string.settings_service_enabled),
+                    stringResource(R.string.settings_service_disabled),
+                )
+                Hint(stringResource(R.string.settings_service_explanation))
+                OutlinedButton(onClick = { context.startActivity(SystemState.accessibilitySettingsIntent()) }) {
+                    Text(stringResource(R.string.settings_open_accessibility))
+                }
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !serviceEnabled) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && floating && !serviceEnabled) {
             Section(stringResource(R.string.settings_restricted_title)) {
                 Hint(stringResource(R.string.settings_restricted_body))
                 OutlinedButton(onClick = { context.startActivity(SystemState.appDetailsIntent(context)) }) {

@@ -1,6 +1,9 @@
-# Handy for Android: dictation button
+# Handy for Android
 
-A native Android companion to Handy. An accessibility service watches which text field has focus and shows a small floating Handy button next to it. Tap the button, speak, and the transcript is inserted at the cursor. You keep your usual keyboard (Gboard etc.): this is **not** a custom keyboard (IME).
+A native Android companion to Handy, with two ways to dictate:
+
+- **Voice keyboard (recommended):** you keep Gboard. Tap its globe key (or long-press the space bar) and Handy takes over the keyboard area: it starts listening right away, shows live voice-level bars so you can see it records cleanly, types the transcript at the cursor and switches back to Gboard. It works in every app, with no accessibility service.
+- **Floating button (optional, off by default):** an accessibility service shows a small Handy button next to the focused text field. Tap it, speak, and the transcript is inserted.
 
 It is a port of desktop Handy's transcription flow:
 
@@ -34,17 +37,21 @@ adb install -r handy-android-debug-*.apk
 
 or open the APK on the phone and allow "Install unknown apps" for your browser or file manager.
 
-### 3. Allow restricted settings (Android 13+, sideloaded apps)
+### 3. Enable the voice keyboard
 
-Android blocks accessibility services for apps that don't come from an app store. The switch in step 4 is greyed out with a "Restricted setting" dialog until you allow it:
+In Handy, tap **Enable the Handy keyboard** (or **Settings › System › Keyboard › On-screen keyboard › Manage keyboards**) and turn on **Handy voice keyboard**. Android warns that a keyboard can collect what you type; Handy only receives what you dictate and inserts it, it never sees your Gboard typing. Keep Gboard as the default keyboard.
 
-1. Try to enable the service once (step 4); the dialog appears. On Android 15+ this first attempt is required, otherwise the menu entry below doesn't show.
+To dictate, open Gboard in any field and tap its **globe key** (shown once several keyboards are enabled) or **long-press the space bar** and pick _Handy voice keyboard_. _Choose keyboard_ in Handy opens the same picker.
+
+### 4. Optional: the floating button
+
+Turn on _Show a floating button on text fields_ in Handy, then enable the accessibility service: **Settings › Accessibility › Installed apps (or Downloaded apps) › Handy dictation button › On.** The _Open accessibility settings_ button in Handy goes straight there.
+
+On Android 13+ a sideloaded app's accessibility switch is greyed out with a "Restricted setting" dialog until you allow it:
+
+1. Try to enable the service once; the dialog appears. On Android 15+ this first attempt is required, otherwise the menu entry below doesn't show.
 2. Open **Settings › Apps › Handy** (or the _Open app info_ button in Handy).
 3. Tap the **⋮** menu (top right) › **Allow restricted settings**, then confirm with your PIN or fingerprint.
-
-### 4. Enable the service
-
-**Settings › Accessibility › Installed apps (or Downloaded apps) › Handy dictation button › On.** The _Open accessibility settings_ button in Handy goes straight there.
 
 ### 5. Allow the microphone
 
@@ -65,6 +72,18 @@ In **Post-processing (Claude)**:
 - Under **Button tap**, choose whether a tap transcribes plainly or with Claude. The long-press menu always offers the other action, like desktop's two shortcuts.
 
 ## Using it
+
+### Voice keyboard
+
+- Switch to Handy from Gboard (globe key or long-press on space). It listens right away (turn off _Start listening right away_ to tap first); the start chime plays once the mic is live, if sounds are on.
+- The bars scroll from right to left, one per 30 ms of audio: flat dim bars mean silence, pink bars that follow your voice mean Handy hears you cleanly.
+- Recording stops after the silence timeout, or tap the hand. The status line shows _Transcribing…_, then _Cleaning up with Claude…_ when post-processing is on.
+- The text is inserted at the cursor with desktop's spacing rules, then Handy switches back to Gboard (turn off _Return to the previous keyboard_ to stay).
+- The **Claude** chip (shown when post-processing is configured) toggles Claude for this and later dictations; it is the same setting as the button's tap action.
+- The keyboard icon goes back to Gboard; ✕ cancels and goes back. Leaving the field or closing the keyboard cancels a recording.
+- On password, PIN and code fields Handy doesn't record and says so.
+
+### Floating button
 
 - Focus a text field: the button fades in at the field's bottom-right corner, outside the field and never over the keyboard.
 - **Tap** to start recording (light haptic). The ring pulses with your voice. Recording stops after the configured silence, or when you tap again.
@@ -124,22 +143,22 @@ Not ported: Whisper Medium and Large (1.9 GB+, too slow on a phone CPU), and des
 
 ## Desktop parity
 
-| Desktop setting / behaviour                                                                   | Android                                                                                 |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `selected_model`, model download/delete                                                       | Speech models screen                                                                    |
-| `selected_language`, `translate_to_english`                                                   | Transcription › Language (only languages the model supports; same fallback rules)       |
-| `custom_words`, `word_correction_threshold`                                                   | Transcription › Custom words (same algorithm and default 0.18)                          |
-| `filler_word_removal_enabled`, `custom_filler_words`                                          | Transcription › Filler words (same lists and language gating)                           |
-| `model_unload_timeout`                                                                        | Transcription › Unload model (same choices, default 5 min)                              |
-| `vad_enabled` (Silero)                                                                        | Transcription › Voice activity detection (default on)                                   |
-| `post_process_enabled`, API key, model, prompts, selected prompt                              | Post-processing (Anthropic only; key encrypted with the Android Keystore)               |
-| `transcribe` / `transcribe_with_post_process` shortcuts                                       | Button tap action + long-press menu                                                     |
-| LLM response cleanup (`<think>` block, invisible characters)                                  | Same                                                                                    |
-| `audio_feedback`, `sound_theme`, `audio_feedback_volume`                                      | Button and behaviour › Sounds (marimba and pop, same files)                             |
-| `append_trailing_space`, `auto_submit`                                                        | Button and behaviour › Output (auto submit sends the field's IME action, Android 11+)   |
-| `history_limit`, history                                                                      | History screen (text only; recordings are not kept)                                     |
-| Global shortcuts, overlay, paste methods                                                      | Replaced by the floating button, `ACTION_SET_TEXT` insertion and the clipboard fallback |
-| Other providers (OpenAI, Groq…), Chinese script conversion, custom sound files, debug options | Not ported                                                                              |
+| Desktop setting / behaviour                                                                   | Android                                                                                                                                 |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `selected_model`, model download/delete                                                       | Speech models screen                                                                                                                    |
+| `selected_language`, `translate_to_english`                                                   | Transcription › Language (only languages the model supports; same fallback rules)                                                       |
+| `custom_words`, `word_correction_threshold`                                                   | Transcription › Custom words (same algorithm and default 0.18)                                                                          |
+| `filler_word_removal_enabled`, `custom_filler_words`                                          | Transcription › Filler words (same lists and language gating)                                                                           |
+| `model_unload_timeout`                                                                        | Transcription › Unload model (same choices, default 5 min)                                                                              |
+| `vad_enabled` (Silero)                                                                        | Transcription › Voice activity detection (default on)                                                                                   |
+| `post_process_enabled`, API key, model, prompts, selected prompt                              | Post-processing (Anthropic only; key encrypted with the Android Keystore)                                                               |
+| `transcribe` / `transcribe_with_post_process` shortcuts                                       | Button tap action + long-press menu                                                                                                     |
+| LLM response cleanup (`<think>` block, invisible characters)                                  | Same                                                                                                                                    |
+| `audio_feedback`, `sound_theme`, `audio_feedback_volume`                                      | Button and behaviour › Sounds (marimba and pop, same files)                                                                             |
+| `append_trailing_space`, `auto_submit`                                                        | Button and behaviour › Output (auto submit sends the field's IME action, Android 11+)                                                   |
+| `history_limit`, history                                                                      | History screen (text only; recordings are not kept)                                                                                     |
+| Global shortcuts, overlay, paste methods                                                      | Replaced by the voice keyboard (`InputConnection.commitText`) and the optional floating button (`ACTION_SET_TEXT` + clipboard fallback) |
+| Other providers (OpenAI, Groq…), Chinese script conversion, custom sound files, debug options | Not ported                                                                                                                              |
 
 ## Settings
 
@@ -188,7 +207,20 @@ To re-skin the button, replace `app/src/main/res/drawable/ic_handy_button.xml` (
 
 ## Manual test checklist
 
-Run with Gboard as the keyboard. For each item, also check that the button never covers the keyboard or the typed text.
+### Voice keyboard
+
+1. Enable the Handy keyboard from Handy's home screen; the status turns to _Handy keyboard enabled_.
+2. In Messages, Chrome (address bar and a web form) and the Claude app: open Gboard, switch to Handy with the globe key. It starts listening, the bars move with your voice and stay flat when you're silent. Stop talking: the text appears at the cursor and Gboard comes back.
+3. Type "Bonjour" with Gboard, switch to Handy, say "comment ça va": the result is "Bonjour comment ça va" with a single space.
+4. Tap the hand while listening: it stops and transcribes. Tap ✕ while listening: nothing is inserted and Gboard comes back.
+5. With Claude configured, toggle the **Claude** chip and dictate: the status shows _Cleaning up with Claude…_ and the cleaned text is inserted.
+6. On a password field, switch to Handy: it says voice input is off and doesn't record.
+7. Turn off _Start listening right away_: Handy waits for a tap. Turn off _Return to the previous keyboard_: Handy stays after inserting.
+8. Revoke the microphone permission or delete every model: the panel explains it and _Open Handy_ opens the settings.
+
+### Floating button
+
+Turn on _Show a floating button on text fields_ and run with Gboard as the keyboard. For each item, also check that the button never covers the keyboard or the typed text.
 
 1. **Handy › Test** screen
    - [ ] The button appears on _Single line_, _Multi-line_ and _Classic EditText_; never on _Password_.
@@ -217,6 +249,9 @@ Run with Gboard as the keyboard. For each item, also check that the button never
 15. **History, sounds, output:** the History screen lists the last dictations with the original and the Claude version. Sounds on: the start chime plays once the mic is ready, the stop chime at the end. Auto submit on in Messages: the message is sent after insertion.
 
 ## Troubleshooting
+
+- **The globe key doesn't show in Gboard:** enable the Handy keyboard first; Gboard shows the globe key (or the long-press on space) only when more than one keyboard is enabled. Gboard settings › Preferences › _Show language switch key_ also controls it.
+- **The voice keyboard records nothing:** run `adb logcat -s HandyIme HandyMicFgs`. Check that the bars move when you talk; if they stay flat, another app may hold the microphone.
 
 - **The button doesn't appear in an app:** run `adb logcat -s HandyA11y`, then focus the field. The log says whether the field was skipped as sensitive (with its hint and id), skipped because the app is excluded, or not found under the focused view. Field detection uses input focus first, then the field the last focus, click or cursor event came from (Compose apps like Claude, Chrome), then a bounded search of the focused view.
 - **After installing a new APK**, Android sometimes keeps the old accessibility service running: toggle _Handy dictation button_ off and on in the accessibility settings.

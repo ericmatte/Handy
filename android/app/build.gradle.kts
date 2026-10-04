@@ -16,8 +16,8 @@ android {
         applicationId = "computer.handy.android"
         minSdk = 29
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
 
         ndk {
             // Phones are arm64; x86_64 keeps the emulator usable. Drops ~25 MB of 32-bit libs.
