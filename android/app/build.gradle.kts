@@ -43,6 +43,18 @@ android {
         }
     }
 
+    signingConfigs {
+        // A fixed debug key, committed on purpose: CI runners otherwise generate a new random
+        // one per build, and Android refuses to update an app whose signature changed
+        // ("package conflicts with an existing package"). Debug-only; not a release key.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

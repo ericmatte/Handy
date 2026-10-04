@@ -250,6 +250,8 @@ Turn on _Show a floating button on text fields_ and run with Gboard as the keybo
 
 ## Troubleshooting
 
+- **"App not installed as package conflicts with an existing package":** the installed APK was signed with a different key. Builds before 0.3.20 were each signed with a random CI key; since then every debug APK is signed with `app/debug.keystore` (a debug-only key, committed on purpose). Uninstall Handy once, then install the new APK; later APKs install as updates.
+
 - **The globe key doesn't show in Gboard:** enable the Handy keyboard first; Gboard shows the globe key (or the long-press on space) only when more than one keyboard is enabled. Gboard settings › Preferences › _Show language switch key_ also controls it.
 - **The voice keyboard records nothing:** run `adb logcat -s HandyIme HandyMicFgs`. Check that the bars move when you talk; if they stay flat, another app may hold the microphone.
 
