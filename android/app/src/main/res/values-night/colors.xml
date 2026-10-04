@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="handy_menu_bg">#FF2E2629</color>
+    <color name="handy_menu_text">#FFF4E9ED</color>
+    <color name="ime_background">#FF1E1A1C</color>
+    <color name="ime_text">#FFF4E9ED</color>
+    <color name="ime_text_secondary">#FFB09BA4</color>
+    <color name="ime_wave_idle">#FF54474D</color>
+    <color name="logo_primary">#FFF28CBB</color>
+    <color name="logo_stroke">#FFFAD1ED</color>
+</resources>

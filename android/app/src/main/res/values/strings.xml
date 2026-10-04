@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Handy</string>
+    <string name="accessibility_service_label">Handy dictation button</string>
+    <string name="accessibility_service_description">Shows a small Handy button next to the text field you are typing in. Tap it to dictate: your voice is transcribed and the text is inserted at the cursor. Handy reads which field is focused (never password fields or excluded apps) and does not collect or send what you type.</string>
+
+    <!-- Overlay -->
+    <string name="overlay_button_description">Handy: tap to dictate, long-press for options</string>
+    <string name="overlay_button_recording">Handy is listening. Tap to stop.</string>
+    <string name="overlay_button_processing">Handy is transcribing</string>
+    <string name="menu_hide_in_app">Hide in this app</string>
+    <string name="menu_settings">Settings</string>
+
+    <!-- Dictation feedback -->
+    <string name="error_mic_permission">Handy needs microphone access. Allow it in Handy\'s settings.</string>
+    <string name="error_mic_unavailable">The microphone is unavailable (in use or blocked by the system).</string>
+    <string name="error_too_short">Recording too short.</string>
+    <string name="error_nothing_heard">Nothing was heard.</string>
+    <string name="error_generic">Dictation failed.</string>
+    <string name="toast_copied_to_clipboard">Couldn\'t write into the field: the text is on the clipboard.</string>
+    <string name="notification_channel_recording">Recording</string>
+    <string name="notification_recording_title">Handy is listening…</string>
+
+    <!-- Settings -->
+    <string name="settings_service_title">Floating button</string>
+    <string name="settings_service_enabled">Service enabled</string>
+    <string name="settings_service_disabled">Service disabled</string>
+    <string name="settings_service_explanation">Enable “Handy dictation button” in Accessibility settings (Installed apps / Downloaded apps).</string>
+    <string name="settings_open_accessibility">Open accessibility settings</string>
+    <string name="settings_restricted_title">“Restricted setting” blocked?</string>
+    <string name="settings_restricted_body">Android 13+ blocks accessibility for apps installed outside the Play Store. If the switch is greyed out: open App info › ⋮ menu (top right) › “Allow restricted settings”, confirm, then come back and enable the service. On Android 15+ the option only appears after you have tried to enable the service once.</string>
+    <string name="settings_open_app_info">Open app info</string>
+    <string name="settings_permissions_title">Permissions</string>
+    <string name="settings_mic_granted">Microphone allowed</string>
+    <string name="settings_mic_missing">Microphone not allowed</string>
+    <string name="settings_grant_mic">Allow microphone</string>
+    <string name="settings_notifications_explanation">Optional: a notification is shown while Handy is recording. Allow notifications to see it.</string>
+    <string name="settings_grant_notifications">Allow notifications</string>
+    <string name="settings_appearance_title">Button</string>
+    <string name="settings_opacity">Opacity at rest: %1$d %%</string>
+    <string name="settings_size">Size: %1$d dp</string>
+    <string name="settings_preview_hint">Tap the preview to see each state. The button fades further after 3 s without interaction.</string>
+    <string name="settings_recording_title">Recording</string>
+    <string name="settings_silence">Stop after silence: %1$.1f s</string>
+    <string name="settings_silence_explanation">Recording stops by itself after this much silence following speech. You can also tap the button to stop.</string>
+    <string name="settings_exclusions_title">Excluded apps</string>
+    <string name="settings_exclusions_explanation">The button never appears in these apps. Banks and password managers found on this phone were added automatically. Handy itself, the system UI, the lock screen and launchers are always excluded.</string>
+    <string name="settings_exclusions_add">Add apps</string>
+    <string name="settings_exclusions_redetect">Detect again</string>
+    <string name="settings_exclusions_empty">No excluded apps.</string>
+    <string name="settings_exclusions_remove">Remove</string>
+    <plurals name="settings_redetect_result">
+        <item quantity="one">%1$d app added</item>
+        <item quantity="other">%1$d apps added</item>
+    </plurals>
+    <string name="settings_picker_title">Exclude apps</string>
+    <string name="settings_picker_search">Search</string>
+    <string name="action_done">Done</string>
+    <string name="settings_test_button">Test in a text field</string>
+
+    <!-- Test screen -->
+    <string name="test_title">Test Handy</string>
+    <string name="test_intro">Tap a field: the Handy button appears next to it, outside the keyboard. Tap the button, speak, and the transcript is inserted at the cursor. Download the speech model in settings first.</string>
+    <string name="test_field_single">Single line</string>
+    <string name="test_field_multi">Multi-line</string>
+    <string name="test_field_multi_hint">The placeholder must not be merged with the text</string>
+    <string name="test_field_view">Classic EditText (View)</string>
+    <string name="test_field_view_hint">Type or dictate here</string>
+    <string name="test_field_password">Password</string>
+    <string name="test_password_note">No button should appear on the password field.</string>
+
+    <!-- Speech model and post-processing -->
+    <string name="error_model_missing">Download the speech model in Handy\'s settings first.</string>
+    <string name="toast_post_process_failed">Claude post-processing failed: raw transcript inserted.</string>
+    <string name="settings_model_downloading">Downloading… %1$d / %2$d MB</string>
+    <string name="settings_model_extracting">Installing… (a few minutes)</string>
+    <string name="settings_model_delete">Delete model</string>
+    <string name="settings_model_cancel">Cancel</string>
+    <string name="settings_model_failed">Download failed: %1$s</string>
+    <string name="settings_model_retry">Retry</string>
+    <string name="settings_pp_title">Post-processing (Claude)</string>
+    <string name="settings_pp_enable">Clean up with Claude</string>
+    <string name="settings_pp_explanation">Sends the transcript (text only, never audio) to Anthropic with your prompt. If the call fails, the raw transcript is inserted.</string>
+    <string name="settings_pp_api_key">Anthropic API key</string>
+    <string name="settings_pp_api_key_help">Stored encrypted on this phone (Android Keystore).</string>
+    <string name="settings_pp_model">Model</string>
+    <string name="settings_pp_prompt">Prompt</string>
+    <string name="settings_pp_prompt_help">${output} is replaced by the transcript, as on desktop.</string>
+    <string name="settings_pp_reset_prompt">Reset prompt</string>
+    <string name="settings_pp_test">Test</string>
+    <string name="settings_pp_testing">Testing…</string>
+    <string name="settings_pp_sample">euh alors je voulais te dire que la réunion de demain est à trois heures virgule pas à quatre heures point</string>
+    <string name="settings_pp_test_input">Input: %1$s</string>
+    <string name="settings_pp_test_error">Error: %1$s</string>
+    <string name="menu_dictate_with_claude">Dictate with Claude</string>
+    <string name="menu_dictate_without_claude">Dictate without Claude</string>
+
+    <!-- Navigation -->
+    <string name="settings_title">Settings</string>
+    <string name="screen_models">Speech models</string>
+    <string name="screen_transcription">Transcription</string>
+    <string name="screen_post_process">Post-processing (Claude)</string>
+    <string name="screen_button">Button and behaviour</string>
+    <string name="screen_exclusions">Excluded apps</string>
+    <string name="screen_history">History</string>
+    <string name="action_back">Back</string>
+    <string name="action_close">Close</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_add">Add</string>
+    <string name="state_on">On</string>
+    <string name="state_off">Off</string>
+    <string name="home_model_missing">%1$s (not downloaded)</string>
+    <plurals name="home_excluded_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <plurals name="home_history_count">
+        <item quantity="one">%1$d dictation</item>
+        <item quantity="other">%1$d dictations</item>
+    </plurals>
+    <string name="home_first_model_title">Download a speech model</string>
+    <string name="home_first_model_body">Handy transcribes on the phone, like on desktop. Open Speech models and download one: Parakeet V3 is recommended (25 European languages including French).</string>
+
+    <!-- Models -->
+    <string name="models_intro">The same models as Handy desktop, running on the phone (sherpa-onnx). Download as many as you like and pick the one to use. Wi-Fi recommended; keep this screen open while downloading.</string>
+    <string name="models_meta">Download %1$d MB · %2$d MB on the phone · %3$s</string>
+    <string name="models_languages_count">%1$d languages</string>
+    <string name="settings_model_download_size">Download (%1$d MB)</string>
+    <string name="models_queued">Waiting for the current download…</string>
+    <string name="models_use">Use this model</string>
+    <string name="models_in_use">In use</string>
+    <string name="models_not_enough_space">not enough free storage</string>
+    <string name="models_delete_title">Delete %1$s?</string>
+    <string name="models_delete_body">It can be downloaded again later.</string>
+
+    <!-- Transcription -->
+    <string name="language_auto">Automatic</string>
+    <string name="transcription_language_title">Language</string>
+    <string name="transcription_language">Spoken language</string>
+    <string name="transcription_language_hint">Setting the language improves accuracy and lets Handy remove filler words of that language.</string>
+    <string name="transcription_language_auto_hint">%1$s detects the language by itself.</string>
+    <string name="transcription_language_fixed">%1$s only understands %2$s.</string>
+    <string name="transcription_language_unsupported">%1$s doesn\'t support this language: %2$s is used instead.</string>
+    <string name="transcription_translate">Translate to English</string>
+    <string name="transcription_translate_hint">Speak any language, get English text.</string>
+    <string name="transcription_translate_unsupported">Not available with %1$s (use Whisper Small/Base or Canary).</string>
+    <string name="transcription_custom_words">Custom words</string>
+    <string name="transcription_custom_words_hint">Names and jargon the model gets wrong. Close matches in the transcript are replaced by these spellings, like on desktop (e.g. \"Charge B\" → \"ChargeBee\").</string>
+    <string name="transcription_custom_words_placeholder">e.g. Handy, ChargeBee</string>
+    <string name="transcription_threshold">Matching tolerance: %1$.2f</string>
+    <string name="transcription_threshold_hint">Higher replaces more aggressively. Desktop default: %1$.2f.</string>
+    <string name="transcription_fillers_title">Filler words</string>
+    <string name="transcription_fillers">Remove filler words</string>
+    <string name="transcription_fillers_hint">uh, hmm… always; um/ah (English), euh (French), äh (German) when the language is known. Repeated words (\"I I I\") are collapsed.</string>
+    <string name="transcription_custom_fillers">Custom filler words</string>
+    <string name="transcription_custom_fillers_hint">Comma-separated. Replaces the built-in lists; leave empty to use them.</string>
+    <string name="transcription_performance_title">Performance</string>
+    <string name="transcription_unload">Unload model</string>
+    <string name="transcription_unload_hint">The model uses several hundred MB of memory while loaded. Keeping it longer makes the next dictation start faster.</string>
+    <string name="unload_never">Never</string>
+    <string name="unload_immediately">Immediately</string>
+    <string name="unload_2min">After 2 minutes</string>
+    <string name="unload_5min">After 5 minutes</string>
+    <string name="unload_10min">After 10 minutes</string>
+    <string name="unload_15min">After 15 minutes</string>
+    <string name="unload_1h">After 1 hour</string>
+    <string name="transcription_vad">Voice activity detection</string>
+    <string name="transcription_vad_hint">Silero VAD, like desktop: stops after the silence delay and cuts silence before transcribing (fewer invented words).</string>
+
+    <!-- Post-processing -->
+    <string name="settings_pp_load_models">Load models</string>
+    <string name="settings_pp_default_model">Use Haiku (default)</string>
+    <string name="settings_pp_prompts">Prompts</string>
+    <string name="settings_pp_add_prompt">New prompt</string>
+    <string name="settings_pp_edit_prompt">Edit prompt</string>
+    <string name="settings_pp_prompt_name">Name</string>
+    <string name="settings_tap_action">Button tap</string>
+    <string name="settings_tap_action_hint">Like desktop\'s two shortcuts. The long-press menu offers the other action when post-processing is on.</string>
+    <string name="tap_transcribe">Transcribe</string>
+    <string name="tap_transcribe_with_claude">Transcribe and clean up with Claude</string>
+
+    <!-- Button and behaviour -->
+    <string name="settings_sounds_title">Sounds</string>
+    <string name="settings_sounds">Start and stop sounds</string>
+    <string name="settings_sounds_hint">The desktop app\'s sounds, played when the microphone is ready and when recording stops.</string>
+    <string name="settings_sound_theme">Sound theme</string>
+    <string name="sound_marimba">Marimba</string>
+    <string name="sound_pop">Pop</string>
+    <string name="settings_sound_volume">Volume: %1$d %%</string>
+    <string name="settings_sound_test_start">Play start</string>
+    <string name="settings_sound_test_stop">Play stop</string>
+    <string name="settings_output_title">Output</string>
+    <string name="settings_trailing_space">Append trailing space</string>
+    <string name="settings_trailing_space_hint">Always end the inserted text with a space.</string>
+    <string name="settings_auto_submit">Auto submit</string>
+    <string name="settings_auto_submit_hint">Press Enter after inserting (sends in chat apps). Android 11+.</string>
+
+    <!-- History -->
+    <string name="history_settings">History</string>
+    <string name="history_limit">Keep</string>
+    <string name="history_limit_value">Last %1$d dictations</string>
+    <string name="history_off">Off</string>
+    <string name="history_privacy">Stored only on this phone, never backed up. Audio is not kept.</string>
+    <string name="history_clear">Clear history</string>
+    <string name="history_empty">No dictations yet.</string>
+    <string name="history_original">Before “%1$s”: %2$s</string>
+    <string name="history_copy">Copy</string>
+    <string name="history_copy_original">Copy original</string>
+    <string name="history_copied">Copied</string>
+
+    <!-- Voice keyboard -->
+    <string name="ime_label">Handy voice keyboard</string>
+    <string name="ime_subtype_label">Voice (Handy)</string>
+    <string name="ime_claude_chip">Claude</string>
+    <string name="ime_switch_keyboard">Back to the keyboard</string>
+    <string name="ime_open_settings">Handy settings</string>
+    <string name="ime_open_handy">Open Handy</string>
+    <string name="ime_status_ready">Tap the hand to speak</string>
+    <string name="ime_status_starting">Starting the microphone…</string>
+    <string name="ime_status_listening">Listening… tap to stop</string>
+    <string name="ime_status_transcribing">Transcribing…</string>
+    <string name="ime_status_post_processing">Cleaning up with Claude…</string>
+    <string name="ime_status_inserted">Inserted</string>
+    <string name="ime_status_sensitive">Voice input is off in password and code fields.</string>
+    <string name="ime_error_no_field">No text field is connected.</string>
+    <string name="settings_ime_title">Voice keyboard</string>
+    <string name="settings_ime_enabled">Handy keyboard enabled</string>
+    <string name="settings_ime_disabled">Handy keyboard not enabled</string>
+    <string name="settings_ime_explanation">Keep Gboard as your keyboard. Tap its globe key (or long-press the space bar) to switch to Handy: it listens right away, shows your voice level, types the text and switches back to Gboard. No accessibility service needed.</string>
+    <string name="settings_ime_enable">Enable the Handy keyboard</string>
+    <string name="settings_ime_try">Choose keyboard</string>
+    <string name="settings_ime_auto_start">Start listening right away</string>
+    <string name="settings_ime_auto_start_hint">Off: tap the hand to start.</string>
+    <string name="settings_ime_return">Return to the previous keyboard</string>
+    <string name="settings_ime_return_hint">After inserting the text.</string>
+    <string name="screen_behaviour">Recording and output</string>
+    <string name="settings_mode_title">How to dictate</string>
+    <string name="settings_mode_keyboard">Voice keyboard</string>
+    <string name="settings_mode_keyboard_hint">Switch to Handy from Gboard\'s globe key. Recommended.</string>
+    <string name="settings_mode_floating">Floating button</string>
+    <string name="settings_mode_floating_hint">A Handy button next to text fields. Needs the accessibility service.</string>
+
+    <!-- Onboarding -->
+    <string name="onb_skip">Skip</string>
+    <string name="onb_start">Get started</string>
+    <string name="onb_continue">Continue</string>
+    <string name="onb_later">Later</string>
+    <string name="onb_recommended">Recommended</string>
+    <string name="onb_welcome_title">Dictate in any app</string>
+    <string name="onb_welcome_body">Handy turns your voice into text with a speech model that runs on your phone. Setup takes a minute.</string>
+    <string name="onb_mode_title">How do you want to dictate?</string>
+    <string name="onb_mode_body">You can change this later in the settings.</string>
+    <string name="onb_mode_keyboard_body">Keep Gboard. Tap its globe key to switch to Handy: it listens, types the text and switches back. Works in every app.</string>
+    <string name="onb_mode_floating_body">A small Handy button appears next to the text field you are typing in. Needs the accessibility service.</string>
+    <string name="onb_model_title">Choose a speech model</string>
+    <string name="onb_model_body">It downloads in the background while you finish setting up. Wi-Fi recommended.</string>
+    <string name="onb_model_size">%1$d MB download</string>
+    <string name="onb_model_installed">Installed</string>
+    <string name="onb_model_keep">Keep %1$s</string>
+    <string name="onb_mic_title">Allow the microphone</string>
+    <string name="onb_mic_body">Handy only listens while you dictate. Speech is transcribed on the phone.</string>
+    <string name="onb_mic_notifications">Android then asks about notifications: Handy shows one while it records.</string>
+    <string name="onb_mic_allow">Allow the microphone</string>
+    <string name="onb_mic_refused">Microphone access was refused. Allow it in App info › Permissions › Microphone.</string>
+    <string name="onb_kbd_title">Turn on the Handy keyboard</string>
+    <string name="onb_kbd_body">In the list that opens, turn on “Handy voice keyboard”, then come back here. Gboard stays your main keyboard.</string>
+    <string name="onb_kbd_warning">Android warns that a keyboard can collect what you type. Handy only gets what you dictate; it never sees your Gboard typing.</string>
+    <string name="onb_a11y_title">Turn on the floating button</string>
+    <string name="onb_a11y_body">In Accessibility › Installed apps, open “Handy dictation button”, turn it on, then come back here.</string>
+    <string name="onb_done_title">You\'re all set</string>
+    <string name="onb_done_keyboard">In any text field, tap Gboard\'s globe key (or long-press the space bar) and pick Handy. Speak: the text appears and Gboard comes back.</string>
+    <string name="onb_done_floating">Tap a text field: the Handy button appears next to it. Tap it, speak, and the text is inserted.</string>
+    <string name="onb_done_claude">Optional: clean up dictations with Claude in Settings › Post-processing.</string>
+    <string name="onb_try">Try it</string>
+    <string name="onb_finish">Finish</string>
+    <string name="onb_download_queued">%1$s: waiting to download…</string>
+    <string name="onb_download_progress">Downloading %1$s: %2$d%%</string>
+    <string name="onb_download_installing">Installing %1$s…</string>
+    <string name="onb_download_ready">%1$s is ready</string>
+    <string name="onb_download_failed">%1$s couldn\'t be downloaded.</string>
+    <string name="settings_replay_onboarding">Run the setup again</string>
+</resources>

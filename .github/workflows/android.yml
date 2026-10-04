@@ -1,0 +1,65 @@
+name: Android
+
+on:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "handy-android-debug-${GITHUB_SHA::7}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: handy-android-debug
+          path: android/handy-android-debug-*.apk
+          if-no-files-found: error
+
+      # A pre-release makes the APK downloadable straight from the phone (artifacts need a
+      # GitHub login and come zipped). Only for pushes, never for pull requests from forks.
+      - name: Publish pre-release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-debug-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Handy Android debug ${{ github.run_number }} (${{ github.ref_name }})
+          body: |
+            Debug build of the Android overlay app from `${{ github.ref_name }}` at ${{ github.sha }}.
+            Install with `adb install -r` or open the APK on the phone. See android/README.md.
+          prerelease: true
+          files: android/handy-android-debug-*.apk

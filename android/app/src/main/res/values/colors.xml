@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sampled from the desktop app icon (src-tauri/icons/icon.png). -->
+    <color name="handy_pink">#FFF7A8CB</color>
+    <color name="handy_ink">#FF2A1A22</color>
+    <color name="handy_recording">#FFE0457B</color>
+    <color name="handy_success">#FF2E9E5B</color>
+    <color name="handy_error">#FFD9443A</color>
+    <color name="handy_menu_bg">#FFFFFFFF</color>
+    <color name="handy_menu_text">#FF2A1A22</color>
+    <color name="ime_background">#FFF3EEF1</color>
+    <color name="ime_text">#FF2A1A22</color>
+    <color name="ime_text_secondary">#FF7A6870</color>
+    <color name="ime_wave_idle">#FFC9B9C0</color>
+    <color name="logo_primary">#FFFAA2CA</color>
+    <color name="logo_stroke">#FF382731</color>
+</resources>

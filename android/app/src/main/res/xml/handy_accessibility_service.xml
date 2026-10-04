@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Base event mask: focus, cursor, click and window changes only (clicks catch fields in
+  Compose apps and Chrome, whose focus events are not always sent). While an eligible field is focused the
+  service adds typeViewScrolled|typeWindowsChanged at runtime (setServiceInfo) to hide on scroll
+  and track the keyboard, then removes them again.
+  flagReportViewIds exposes viewIdResourceName for the sensitive-field heuristics.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeViewFocused|typeViewTextSelectionChanged|typeViewClicked|typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="50"
+    android:description="@string/accessibility_service_description"
+    android:settingsActivity="computer.handy.android.ui.MainActivity"
+    android:isAccessibilityTool="false" />

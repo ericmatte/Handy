@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Handy as a voice-only keyboard. Gboard stays the main keyboard: switch to Handy with Gboard's
+  globe key (or a long-press on the space bar); Handy returns to the previous keyboard after
+  inserting. The subtype is not auxiliary so Gboard's "next keyboard" key includes it, and its
+  "voice" mode lets keyboards that support a voice-input shortcut open it from their mic key.
+-->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="computer.handy.android.ui.MainActivity"
+    android:supportsSwitchingToNextInputMethod="true">
+    <subtype
+        android:label="@string/ime_subtype_label"
+        android:imeSubtypeMode="voice"
+        android:isAuxiliary="false"
+        android:overridesImplicitlyEnabledSubtype="true" />
+</input-method>
