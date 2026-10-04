@@ -6,6 +6,13 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -78,28 +86,46 @@ fun SettingsScreen(app: HandyApp) {
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = padding.calculateTopPadding() + 8.dp,
-                bottom = padding.calculateBottomPadding() + 24.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            when (screen) {
-                Screen.HOME -> homeItems(app) { screen = it }
-                Screen.MODELS -> modelsItems(app)
-                Screen.TRANSCRIPTION -> transcriptionItems(app)
-                Screen.POST_PROCESS -> postProcessItems(app)
-                Screen.BUTTON -> buttonItems(app)
-                Screen.EXCLUSIONS -> exclusionsItems(app)
-                Screen.HISTORY -> historyItems(app)
+        // Home keeps its scroll position across visits; each sub-screen opens at the top.
+        val homeListState = rememberLazyListState()
+        AnimatedContent(
+            targetState = screen,
+            transitionSpec = {
+                val opening = targetState != Screen.HOME
+                val direction = if (opening) 1 else -1
+                (slideInHorizontally(tween(TRANSITION_MS)) { width -> direction * width / 4 } + fadeIn(tween(TRANSITION_MS)))
+                    .togetherWith(
+                        slideOutHorizontally(tween(TRANSITION_MS)) { width -> -direction * width / 4 } + fadeOut(tween(TRANSITION_MS / 2)),
+                    )
+            },
+            label = "settings screen",
+        ) { shown ->
+            LazyColumn(
+                state = if (shown == Screen.HOME) homeListState else rememberLazyListState(),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = padding.calculateTopPadding() + 8.dp,
+                    bottom = padding.calculateBottomPadding() + 24.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                when (shown) {
+                    Screen.HOME -> homeItems(app) { screen = it }
+                    Screen.MODELS -> modelsItems(app)
+                    Screen.TRANSCRIPTION -> transcriptionItems(app)
+                    Screen.POST_PROCESS -> postProcessItems(app)
+                    Screen.BUTTON -> buttonItems(app)
+                    Screen.EXCLUSIONS -> exclusionsItems(app)
+                    Screen.HISTORY -> historyItems(app)
+                }
             }
         }
     }
 }
+
+private const val TRANSITION_MS = 260
 
 private fun Screen.titleRes(floating: Boolean): Int = when (this) {
     Screen.HOME -> R.string.app_name
