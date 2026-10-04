@@ -79,6 +79,7 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
         @Suppress("DEPRECATION")
         w.navigationBarColor = getColor(R.color.ime_background)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            @Suppress("DEPRECATION") // still the way to stop the IME decor from fitting the nav bar
             w.setDecorFitsSystemWindows(false)
             val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
                 Configuration.UI_MODE_NIGHT_YES

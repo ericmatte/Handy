@@ -239,7 +239,7 @@
     <string name="screen_behaviour">Recording and output</string>
     <string name="settings_mode_title">How to dictate</string>
     <string name="settings_mode_keyboard">Voice keyboard</string>
-    <string name="settings_mode_keyboard_hint">Switch to Handy from Gboard's globe key. Recommended.</string>
+    <string name="settings_mode_keyboard_hint">Switch to Handy from Gboard\'s globe key. Recommended.</string>
     <string name="settings_mode_floating">Floating button</string>
     <string name="settings_mode_floating_hint">A Handy button next to text fields. Needs the accessibility service.</string>
 </resources>
