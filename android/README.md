@@ -37,13 +37,25 @@ adb install -r handy-android-debug-*.apk
 
 or open the APK on the phone and allow "Install unknown apps" for your browser or file manager.
 
-### 3. Enable the voice keyboard
+### 3. First-run setup
+
+The first launch opens a short walkthrough, in this order:
+
+1. **Mode:** voice keyboard (recommended) or floating button.
+2. **Speech model:** tap one and it starts downloading in the background; the walkthrough moves on right away and a progress card follows you through the remaining steps.
+3. **Microphone** (and, on Android 13+, notifications).
+4. **Enable** the Handy keyboard or the accessibility service, depending on the mode. Coming back from the system screen with it enabled moves on by itself.
+5. **Done:** how to use it, and a _Try it_ button.
+
+_Skip_ jumps straight to the settings, and _Run the setup again_ at the bottom of the home screen reopens the walkthrough. Installs that already have a model skip it. The sections below describe each step in detail.
+
+### 4. Enable the voice keyboard
 
 In Handy, tap **Enable the Handy keyboard** (or **Settings › System › Keyboard › On-screen keyboard › Manage keyboards**) and turn on **Handy voice keyboard**. Android warns that a keyboard can collect what you type; Handy only receives what you dictate and inserts it, it never sees your Gboard typing. Keep Gboard as the default keyboard.
 
 To dictate, open Gboard in any field and tap its **globe key** (shown once several keyboards are enabled) or **long-press the space bar** and pick _Handy voice keyboard_. _Choose keyboard_ in Handy opens the same picker.
 
-### 4. Optional: the floating button
+### 5. Optional: the floating button
 
 Under _How to dictate_ in Handy, pick **Floating button** (the keyboard's settings are then hidden, and vice versa), then enable the accessibility service: **Settings › Accessibility › Installed apps (or Downloaded apps) › Handy dictation button › On.** The _Open accessibility settings_ button in Handy goes straight there.
 
@@ -53,15 +65,15 @@ On Android 13+ a sideloaded app's accessibility switch is greyed out with a "Res
 2. Open **Settings › Apps › Handy** (or the _Open app info_ button in Handy).
 3. Tap the **⋮** menu (top right) › **Allow restricted settings**, then confirm with your PIN or fingerprint.
 
-### 5. Allow the microphone
+### 6. Allow the microphone
 
 Open Handy and tap **Allow microphone**. Optionally allow notifications, so the "Handy is listening" notification is visible while recording.
 
-### 6. Download a speech model
+### 7. Download a speech model
 
 In Handy, open **Speech models** and download one. Parakeet V3 is recommended: about 490 MB, 25 European languages including French. Downloads come from the [sherpa-onnx releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models), Wi-Fi recommended. Keep the screen open; an interrupted download resumes where it stopped, and installing takes a few minutes. The first downloaded model is selected automatically.
 
-### 7. Optional: Claude post-processing
+### 8. Optional: Claude post-processing
 
 In **Post-processing (Claude)**:
 

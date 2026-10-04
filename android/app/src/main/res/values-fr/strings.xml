@@ -232,4 +232,44 @@
     <string name="settings_mode_keyboard_hint">Passez à Handy avec la touche globe de Gboard. Recommandé.</string>
     <string name="settings_mode_floating">Bouton flottant</string>
     <string name="settings_mode_floating_hint">Un bouton Handy à côté des champs de texte. Requiert le service d\'accessibilité.</string>
+
+    <!-- Onboarding -->
+    <string name="onb_skip">Passer</string>
+    <string name="onb_start">Commencer</string>
+    <string name="onb_continue">Continuer</string>
+    <string name="onb_later">Plus tard</string>
+    <string name="onb_recommended">Recommandé</string>
+    <string name="onb_welcome_title">Dictez dans n\'importe quelle app</string>
+    <string name="onb_welcome_body">Handy transforme votre voix en texte avec un modèle de reconnaissance qui tourne sur votre téléphone. La configuration prend une minute.</string>
+    <string name="onb_mode_title">Comment voulez-vous dicter ?</string>
+    <string name="onb_mode_body">Vous pourrez changer ce choix plus tard dans les réglages.</string>
+    <string name="onb_mode_keyboard_body">Gardez Gboard. Touchez sa touche globe pour passer à Handy : il écoute, écrit le texte et revient à Gboard. Fonctionne dans toutes les apps.</string>
+    <string name="onb_mode_floating_body">Un petit bouton Handy apparaît à côté du champ de texte où vous écrivez. Requiert le service d\'accessibilité.</string>
+    <string name="onb_model_title">Choisissez un modèle vocal</string>
+    <string name="onb_model_body">Il se télécharge en arrière-plan pendant que vous terminez la configuration. Wi-Fi recommandé.</string>
+    <string name="onb_model_size">Téléchargement de %1$d Mo</string>
+    <string name="onb_model_installed">Installé</string>
+    <string name="onb_model_keep">Garder %1$s</string>
+    <string name="onb_mic_title">Autorisez le micro</string>
+    <string name="onb_mic_body">Handy n\'écoute que pendant la dictée. La transcription se fait sur le téléphone.</string>
+    <string name="onb_mic_notifications">Android demande ensuite les notifications : Handy en affiche une pendant l\'enregistrement.</string>
+    <string name="onb_mic_allow">Autoriser le micro</string>
+    <string name="onb_mic_refused">L\'accès au micro a été refusé. Autorisez-le dans Infos sur l\'app › Autorisations › Micro.</string>
+    <string name="onb_kbd_title">Activez le clavier Handy</string>
+    <string name="onb_kbd_body">Dans la liste qui s\'ouvre, activez « Clavier vocal Handy », puis revenez ici. Gboard reste votre clavier principal.</string>
+    <string name="onb_kbd_warning">Android avertit qu\'un clavier peut collecter ce que vous tapez. Handy ne reçoit que ce que vous dictez ; il ne voit jamais ce que vous tapez avec Gboard.</string>
+    <string name="onb_a11y_title">Activez le bouton flottant</string>
+    <string name="onb_a11y_body">Dans Accessibilité › Applications installées, ouvrez « Bouton de dictée Handy », activez-le, puis revenez ici.</string>
+    <string name="onb_done_title">C\'est prêt !</string>
+    <string name="onb_done_keyboard">Dans n\'importe quel champ, touchez la touche globe de Gboard (ou appui long sur la barre d\'espace) et choisissez Handy. Parlez : le texte apparaît et Gboard revient.</string>
+    <string name="onb_done_floating">Touchez un champ de texte : le bouton Handy apparaît à côté. Touchez-le, parlez, et le texte est inséré.</string>
+    <string name="onb_done_claude">Optionnel : nettoyez vos dictées avec Claude dans Réglages › Post-traitement.</string>
+    <string name="onb_try">Essayer</string>
+    <string name="onb_finish">Terminer</string>
+    <string name="onb_download_queued">%1$s : en attente de téléchargement…</string>
+    <string name="onb_download_progress">Téléchargement de %1$s : %2$d %%</string>
+    <string name="onb_download_installing">Installation de %1$s…</string>
+    <string name="onb_download_ready">%1$s est prêt</string>
+    <string name="onb_download_failed">%1$s n\'a pas pu être téléchargé.</string>
+    <string name="settings_replay_onboarding">Relancer la configuration</string>
 </resources>

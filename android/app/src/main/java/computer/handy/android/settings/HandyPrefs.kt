@@ -46,6 +46,11 @@ class HandyPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_FLOATING_BUTTON, false)
         set(value) = prefs.edit { putBoolean(KEY_FLOATING_BUTTON, value) }
 
+    /** The first-run walkthrough (mode, model, permissions) was completed or skipped. */
+    var onboardingDone: Boolean
+        get() = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
+        set(value) = prefs.edit { putBoolean(KEY_ONBOARDING_DONE, value) }
+
     /** Voice keyboard: start listening as soon as it opens. */
     var imeAutoStart: Boolean
         get() = prefs.getBoolean(KEY_IME_AUTO_START, true)
@@ -242,6 +247,7 @@ class HandyPrefs(context: Context) {
         const val KEY_FLOATING_BUTTON = "floating_button_enabled"
         private const val KEY_IME_AUTO_START = "ime_auto_start"
         private const val KEY_IME_RETURN = "ime_return_to_previous"
+        private const val KEY_ONBOARDING_DONE = "onboarding_done"
         const val KEY_SILENCE = "silence_timeout_ms"
         private const val KEY_VAD = "vad_enabled"
         private const val KEY_AUDIO_FEEDBACK = "audio_feedback"

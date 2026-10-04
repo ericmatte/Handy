@@ -57,7 +57,7 @@ enum class Screen { HOME, MODELS, TRANSCRIPTION, POST_PROCESS, BUTTON, EXCLUSION
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(app: HandyApp) {
+fun SettingsScreen(app: HandyApp, onReplayOnboarding: () -> Unit) {
     var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
     BackHandler(enabled = screen != Screen.HOME) { screen = Screen.HOME }
 
@@ -112,7 +112,7 @@ fun SettingsScreen(app: HandyApp) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 when (shown) {
-                    Screen.HOME -> homeItems(app) { screen = it }
+                    Screen.HOME -> homeItems(app, onReplayOnboarding) { screen = it }
                     Screen.MODELS -> modelsItems(app)
                     Screen.TRANSCRIPTION -> transcriptionItems(app)
                     Screen.POST_PROCESS -> postProcessItems(app)
@@ -137,7 +137,7 @@ private fun Screen.titleRes(floating: Boolean): Int = when (this) {
     Screen.HISTORY -> R.string.screen_history
 }
 
-private fun LazyListScope.homeItems(app: HandyApp, navigate: (Screen) -> Unit) {
+private fun LazyListScope.homeItems(app: HandyApp, onReplayOnboarding: () -> Unit, navigate: (Screen) -> Unit) {
     item { StatusCards(app) }
     item {
         Section(stringResource(R.string.settings_title)) {
@@ -185,6 +185,11 @@ private fun LazyListScope.homeItems(app: HandyApp, navigate: (Screen) -> Unit) {
             onClick = { context.startActivity(Intent(context, TestActivity::class.java)) },
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.settings_test_button)) }
+    }
+    item {
+        TextButton(onClick = onReplayOnboarding, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.settings_replay_onboarding))
+        }
     }
 }
 

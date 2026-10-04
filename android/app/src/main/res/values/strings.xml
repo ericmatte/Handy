@@ -242,4 +242,44 @@
     <string name="settings_mode_keyboard_hint">Switch to Handy from Gboard\'s globe key. Recommended.</string>
     <string name="settings_mode_floating">Floating button</string>
     <string name="settings_mode_floating_hint">A Handy button next to text fields. Needs the accessibility service.</string>
+
+    <!-- Onboarding -->
+    <string name="onb_skip">Skip</string>
+    <string name="onb_start">Get started</string>
+    <string name="onb_continue">Continue</string>
+    <string name="onb_later">Later</string>
+    <string name="onb_recommended">Recommended</string>
+    <string name="onb_welcome_title">Dictate in any app</string>
+    <string name="onb_welcome_body">Handy turns your voice into text with a speech model that runs on your phone. Setup takes a minute.</string>
+    <string name="onb_mode_title">How do you want to dictate?</string>
+    <string name="onb_mode_body">You can change this later in the settings.</string>
+    <string name="onb_mode_keyboard_body">Keep Gboard. Tap its globe key to switch to Handy: it listens, types the text and switches back. Works in every app.</string>
+    <string name="onb_mode_floating_body">A small Handy button appears next to the text field you are typing in. Needs the accessibility service.</string>
+    <string name="onb_model_title">Choose a speech model</string>
+    <string name="onb_model_body">It downloads in the background while you finish setting up. Wi-Fi recommended.</string>
+    <string name="onb_model_size">%1$d MB download</string>
+    <string name="onb_model_installed">Installed</string>
+    <string name="onb_model_keep">Keep %1$s</string>
+    <string name="onb_mic_title">Allow the microphone</string>
+    <string name="onb_mic_body">Handy only listens while you dictate. Speech is transcribed on the phone.</string>
+    <string name="onb_mic_notifications">Android then asks about notifications: Handy shows one while it records.</string>
+    <string name="onb_mic_allow">Allow the microphone</string>
+    <string name="onb_mic_refused">Microphone access was refused. Allow it in App info › Permissions › Microphone.</string>
+    <string name="onb_kbd_title">Turn on the Handy keyboard</string>
+    <string name="onb_kbd_body">In the list that opens, turn on “Handy voice keyboard”, then come back here. Gboard stays your main keyboard.</string>
+    <string name="onb_kbd_warning">Android warns that a keyboard can collect what you type. Handy only gets what you dictate; it never sees your Gboard typing.</string>
+    <string name="onb_a11y_title">Turn on the floating button</string>
+    <string name="onb_a11y_body">In Accessibility › Installed apps, open “Handy dictation button”, turn it on, then come back here.</string>
+    <string name="onb_done_title">You\'re all set</string>
+    <string name="onb_done_keyboard">In any text field, tap Gboard\'s globe key (or long-press the space bar) and pick Handy. Speak: the text appears and Gboard comes back.</string>
+    <string name="onb_done_floating">Tap a text field: the Handy button appears next to it. Tap it, speak, and the text is inserted.</string>
+    <string name="onb_done_claude">Optional: clean up dictations with Claude in Settings › Post-processing.</string>
+    <string name="onb_try">Try it</string>
+    <string name="onb_finish">Finish</string>
+    <string name="onb_download_queued">%1$s: waiting to download…</string>
+    <string name="onb_download_progress">Downloading %1$s: %2$d%%</string>
+    <string name="onb_download_installing">Installing %1$s…</string>
+    <string name="onb_download_ready">%1$s is ready</string>
+    <string name="onb_download_failed">%1$s couldn\'t be downloaded.</string>
+    <string name="settings_replay_onboarding">Run the setup again</string>
 </resources>
