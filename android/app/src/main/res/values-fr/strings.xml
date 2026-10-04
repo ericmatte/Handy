@@ -206,7 +206,7 @@
     <string name="ime_subtype_label">Voix (Handy)</string>
     <string name="ime_claude_chip">Claude</string>
     <string name="ime_switch_keyboard">Revenir au clavier</string>
-    <string name="ime_cancel">Annuler</string>
+    <string name="ime_open_settings">Réglages de Handy</string>
     <string name="ime_open_handy">Ouvrir Handy</string>
     <string name="ime_status_ready">Touchez la main pour parler</string>
     <string name="ime_status_starting">Démarrage du micro…</string>
@@ -216,7 +216,7 @@
     <string name="ime_status_inserted">Inséré</string>
     <string name="ime_status_sensitive">La dictée est désactivée dans les champs de mot de passe et de code.</string>
     <string name="ime_error_no_field">Aucun champ de texte n\'est connecté.</string>
-    <string name="settings_ime_title">Clavier vocal (recommandé)</string>
+    <string name="settings_ime_title">Clavier vocal</string>
     <string name="settings_ime_enabled">Clavier Handy activé</string>
     <string name="settings_ime_disabled">Clavier Handy non activé</string>
     <string name="settings_ime_explanation">Gardez Gboard comme clavier. Touchez sa touche globe (ou appui long sur la barre d\'espace) pour passer à Handy : il écoute aussitôt, affiche le niveau de votre voix, écrit le texte et revient à Gboard. Aucun service d\'accessibilité requis.</string>
@@ -226,6 +226,10 @@
     <string name="settings_ime_auto_start_hint">Désactivé : touchez la main pour démarrer.</string>
     <string name="settings_ime_return">Revenir au clavier précédent</string>
     <string name="settings_ime_return_hint">Après l\'insertion du texte.</string>
-    <string name="settings_floating_toggle">Afficher un bouton flottant sur les champs</string>
-    <string name="settings_floating_hint">Optionnel. Requiert le service d\'accessibilité.</string>
+    <string name="screen_behaviour">Enregistrement et sortie</string>
+    <string name="settings_mode_title">Mode de dictée</string>
+    <string name="settings_mode_keyboard">Clavier vocal</string>
+    <string name="settings_mode_keyboard_hint">Passez à Handy avec la touche globe de Gboard. Recommandé.</string>
+    <string name="settings_mode_floating">Bouton flottant</string>
+    <string name="settings_mode_floating_hint">Un bouton Handy à côté des champs de texte. Requiert le service d\'accessibilité.</string>
 </resources>

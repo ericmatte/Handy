@@ -2,6 +2,7 @@ package computer.handy.android.ime
 
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -16,7 +17,7 @@ import computer.handy.android.overlay.HandyButtonView
 
 /**
  * The voice keyboard's view: status line, live voice-level bars and three controls
- * (back to the keyboard, the Handy record button, cancel). Plain Views, no Compose: an
+ * (back to the keyboard, the Handy record button, Handy's settings). Plain Views, no Compose: an
  * InputMethodService has no lifecycle owner for Compose.
  */
 class VoicePanel(private val context: Context, private val callbacks: Callbacks) {
@@ -24,7 +25,7 @@ class VoicePanel(private val context: Context, private val callbacks: Callbacks)
     interface Callbacks {
         fun onMainButton()
         fun onSwitchKeyboard()
-        fun onCancel()
+        fun onOpenSettings()
         fun onToggleClaude()
         fun onAction()
     }
@@ -81,8 +82,8 @@ class VoicePanel(private val context: Context, private val callbacks: Callbacks)
     val root: View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         setBackgroundColor(context.getColor(R.color.ime_background))
-        val base = dp(12f)
-        setPadding(dp(16f), base, dp(16f), base)
+        val bottom = dp(12f)
+        setPadding(dp(16f), dp(20f), dp(16f), bottom)
 
         addView(
             LinearLayout(context).apply {
@@ -111,14 +112,21 @@ class VoicePanel(private val context: Context, private val callbacks: Callbacks)
                     },
                     LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
                 )
-                addView(iconButton(R.drawable.ic_close, R.string.ime_cancel) { callbacks.onCancel() })
+                addView(iconButton(R.drawable.ic_settings, R.string.ime_open_settings) { callbacks.onOpenSettings() })
             },
         )
 
-        // Stay above the navigation bar on edge-to-edge devices.
+        // The panel is drawn under the navigation bar (HandyVoiceIme turns off decor fitting) so
+        // its background fills that area; the controls stay above it. captionBar is the IME's
+        // own navigation bar (back / keyboard switcher) in gesture navigation.
         setOnApplyWindowInsetsListener { v, insets ->
-            val nav = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
-            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, base + nav)
+            val nav = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.captionBar()).bottom
+            } else {
+                @Suppress("DEPRECATION")
+                insets.systemWindowInsetBottom
+            }
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, bottom + nav)
             insets
         }
     }

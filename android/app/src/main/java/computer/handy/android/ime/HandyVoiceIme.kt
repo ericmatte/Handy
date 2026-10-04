@@ -3,6 +3,7 @@ package computer.handy.android.ime
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.os.VibrationEffect
@@ -11,6 +12,7 @@ import android.os.VibratorManager
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowInsetsController
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import computer.handy.android.HandyApp
@@ -67,6 +69,27 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
     private var blocker = Blocker.NONE
     private var withClaude = false
 
+    override fun onCreate() {
+        super.onCreate()
+        val w = window.window ?: return
+        // Fill the navigation bar area under the panel with the panel's color. Android 15+
+        // (edge-to-edge) leaves it transparent and ignores navigationBarColor, so the panel
+        // draws under it instead (VoicePanel pads its controls above it); older versions use
+        // the color.
+        @Suppress("DEPRECATION")
+        w.navigationBarColor = getColor(R.color.ime_background)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            w.setDecorFitsSystemWindows(false)
+            val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+            // Dark navigation handle and buttons on the light panel.
+            w.insetsController?.setSystemBarsAppearance(
+                if (night) 0 else WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+            )
+        }
+    }
+
     override fun onCreateInputView(): View = VoicePanel(this, this).also { panel = it }.root
 
     // A voice panel never needs the fullscreen extract UI, even in landscape.
@@ -88,7 +111,9 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
         }
         panel?.waveform?.clear()
         showIdle()
-        if (blocker == Blocker.NONE && prefs.imeAutoStart && !restarting) start()
+        if (restarting) return
+        vibrate(VibrationEffect.EFFECT_CLICK)
+        if (blocker == Blocker.NONE && prefs.imeAutoStart) start()
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
@@ -114,7 +139,10 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
     override fun onMainButton() {
         when (phase) {
             Phase.IDLE -> when (blocker) {
-                Blocker.NONE -> start()
+                Blocker.NONE -> {
+                    vibrate(VibrationEffect.EFFECT_CLICK)
+                    start()
+                }
                 Blocker.SENSITIVE -> Unit
                 Blocker.NO_MIC, Blocker.NO_MODEL -> openHandy()
             }
@@ -128,9 +156,9 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
         switchBack()
     }
 
-    override fun onCancel() {
+    override fun onOpenSettings() {
         stopEverything()
-        switchBack()
+        openHandy()
     }
 
     override fun onToggleClaude() {
@@ -171,7 +199,6 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
         p.setAction(null)
         p.waveform.clear()
         p.show(ButtonState.RECORDING, getString(R.string.ime_status_starting), listening = true)
-        vibrate(VibrationEffect.EFFECT_TICK)
 
         // Load the model while the user speaks, so it is ready when they stop.
         app.activeDictations++
@@ -209,6 +236,7 @@ class HandyVoiceIme : InputMethodService(), VoicePanel.Callbacks {
                     MicrophoneForegroundService.stop()
                     recorder = null
                 }
+                // Recording stopped (silence or tap): a short tap, like the one on opening.
                 vibrate(VibrationEffect.EFFECT_CLICK)
                 playSound(start = false)
 
