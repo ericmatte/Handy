@@ -8,6 +8,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Every CI build gets a higher version, so Android installs each APK as an update and
+// Settings › Apps › Handy shows which build is running. Local builds use the fallback.
+val ciBuildNumber: Int? = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
+
 android {
     namespace = "computer.handy.android"
     compileSdk = 37
@@ -16,8 +20,8 @@ android {
         applicationId = "computer.handy.android"
         minSdk = 29
         targetSdk = 37
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = ciBuildNumber ?: 3
+        versionName = "0.3.${ciBuildNumber ?: 0}"
 
         ndk {
             // Phones are arm64; x86_64 keeps the emulator usable. Drops ~25 MB of 32-bit libs.

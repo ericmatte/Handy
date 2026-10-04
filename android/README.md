@@ -20,7 +20,7 @@ The desktop app (Tauri, `src/`, `src-tauri/`) is untouched; this folder is a sta
 
 ### 1. Get the APK
 
-- **From CI:** every push that touches `android/` runs the [Android workflow](../.github/workflows/android.yml). It publishes a pre-release named `Handy Android debug N` with `handy-android-debug-<sha>.apk` attached (open the repo's _Releases_ page from your phone). The same APK is also uploaded as a workflow artifact.
+- **From CI:** every push that touches `android/` runs the [Android workflow](../.github/workflows/android.yml). It publishes a pre-release named `Handy Android debug N` with `handy-android-debug-<sha>.apk` attached (open the repo's _Releases_ page from your phone). The same APK is also uploaded as a workflow artifact. Each CI build's version is the run number (`versionCode` N, `versionName` 0.3.N), so every APK installs over the previous one as an update.
 - **Locally:** JDK 17+ and the Android SDK (platform 37):
 
   ```bash
